@@ -185,7 +185,7 @@ class debugger(object):
                 if i == 'self':
                     pass
                 else:
-                    formatlist = termcolor.colored((unicode(i) + ": "), 'white', 'on_blue') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
+                    formatlist = termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
                     if not defname:
                         defname = str(inspect.stack()[1][3])
                     if filename == None:
@@ -201,9 +201,10 @@ class debugger(object):
             for i in kwargs:
                 try:
                 #formatlist += color_random_1[kwargs.keys().index(i)] + i + ": " + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(i)) + arrow
-                    formatlist += termcolor.colored((unicode(i) + ": "), 'white', 'on_blue') + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(unicode(i))) + arrow
+                    formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(str(i))) + arrow
                 except:
-                    print "DEBUG ERROR !"
+                    print termcolor.colored("DEBUGGER ERROR !", 'white', 'on_red', attrs= ['bold', 'blink'])
+                    traceback.format_exc()
         else:
             formatlist += random.choice(color_random_1) + " start... " + arrow
         formatlist = formatlist[:-4]
