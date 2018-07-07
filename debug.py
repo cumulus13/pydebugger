@@ -216,7 +216,7 @@ class debugger(object):
                 #filename = inspect.stack()[2][3]
                 filename = sys.argv[0]
             #defname = defname + " [" + str(inspect.stack()[0][2]) + "] "
-            formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " [" + termcolor.colored(str(linenumbers), 'white', 'on_cyan') + "] "
+            formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " " + termcolor.colored("[", "cyan") + termcolor.colored(str(linenumbers)[2:-2], 'white', 'on_cyan') + termcolor.colored("]", "cyan")
         else:
             defname = str(inspect.stack()[1][3])
             line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
@@ -267,7 +267,7 @@ def serve(host = '0.0.0.0', port = 50001):
             print msg
             print "=" * (MAX_WIDTH - 3)
 
-def debug(defname = None, debug = None, debug_server = False, line_number = '', **kwargs):
+def debug(defname = None, debug = None, debug_server = False, line_number = '', print_function_parameters = False, **kwargs):
     if DEBUG_SERVER:
         debug_server = True
     if not defname:
@@ -276,7 +276,7 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
         line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
         #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
     c = debugger(defname, debug)
-    msg = c.printlist(defname, debug, linenumbers = line_number, **kwargs)
+    msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
     
     #if DEBUG_SERVER:
         #debug_server_client(msg)

@@ -1,0 +1,6 @@
+.pyc
+^build/
+^dist/
+^(?!a/c).*/build
+^(?!a/c).*/dist
+.spec
