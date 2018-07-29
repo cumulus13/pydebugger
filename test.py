@@ -7,7 +7,3 @@ def function_test(param1, param2, param3):
 
 function_test("test_parameter_1", "test_parameter_2", "test_parameter_3")
 
-try:
-	print "argv 1 =", sys.argv[1]
-except:
-	traceback.format_exc()

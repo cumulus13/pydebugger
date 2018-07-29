@@ -13,6 +13,9 @@ import datetime
 from make_colors import make_colors
 import colorama
 import configparser
+import re
+import traceback
+PID = os.getpid()
 colorama.init(True)
 MAX_WIDTH = cmdw.getWidth()
 DEBUG = False
@@ -33,7 +36,20 @@ if DEBUG_SERVER == 0 or DEBUG_SERVER == '0':
     DEBUG_SERVER = False
 if DEBUG_SERVER == "True" or DEBUG_SERVER == True:
     DEBUG_SERVER = True
-DEBUGGER_SERVER = ['192.168.100.100:50001']
+#DEBUGGER_SERVER = ['192.168.100.100:50001']
+DEBUGGER_SERVER = ['127.0.0.1:50001']
+CONFIG_NAME = os.path.join(os.path.dirname(__file__), 'debug.ini')
+try:
+    cfg = configparser.RawConfigParser(allow_no_value=True) 
+    cfg.read(CONFIG_NAME)
+    cfg = cfg.get('DEBUGGER', 'HOST')
+    if ";" in cfg:
+        DEBUGGER_SERVER = re.split(";", cfg)
+    else:
+        DEBUGGER_SERVER = [cfg]
+except:
+    traceback.format_exc()
+
 if os.getenv('DEBUGGER_SERVER'):
     if ";" in os.getenv('DEBUGGER_SERVER'):
         DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER').strip().split(";")
@@ -43,18 +59,20 @@ if os.getenv('DEBUGGER_SERVER'):
 FILENAME = ''
 if os.getenv('DEBUG_FILENAME'):
     FILENAME = os.getenv('DEBUG_FILENAME')
-CONFIG_NAME = os.path.join(os.path.dirname(__file__), 'debug.ini')
 
-import traceback
 def excepthook(type, value, tb):
     traceback.format_exc(etype = type, value = value, tb = tb)
 
-sys.excepthook = excepthook
+try:    
+    sys.excepthook = excepthook
+except:
+    traceback.format_exc()
 
 
 class debugger(object):
     
     global VERSION
+    global CONFIG_NAME
     VERSION = "0.1"
     
     def __init__(self, defname = None, debug = None, filename = None, **kwargs):
@@ -126,7 +144,7 @@ class debugger(object):
         """
         filename = get_config_file(filename, verbosity)
         data = []
-        cfg = ConfigParser.RawConfigParser(allow_no_value=True, dict_type=MultiOrderedDict) 
+        cfg = configparser.RawConfigParser(allow_no_value=True, dict_type=MultiOrderedDict) 
         cfg.read(filename)
         cfg = cfg.get(section, option)
         if not cfg == None:
@@ -144,6 +162,7 @@ class debugger(object):
     def debug_server_client(self, msg, server_host = '127.0.0.1', port = 50001):
         
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        
         if DEBUGGER_SERVER:
             for i in DEBUGGER_SERVER:
                 if ":" in i:
@@ -154,6 +173,17 @@ class debugger(object):
                     host = i.strip()
                 s.sendto(msg, (host, port))
                 s.close()
+        else:
+            print "self.read_config('DEBUGGER', 'HOST') =", self.read_config('DEBUGGER', 'HOST')
+            if self.read_config('DEBUGGER', 'HOST'):
+                if ":" in self.read_config('DEBUGGER', 'HOST'):
+                    host, port = str(self.read_config('DEBUGGER', 'HOST')).strip().split(":")
+                    port = int(port.strip())
+                    host = host.strip()
+                else:
+                    host = self.read_config('DEBUGGER', 'HOST').strip()
+                s.sendto(msg, (host, port))
+                s.close()                
             
     def setDebug(self, debug):
         self.DEBUG = debug
@@ -176,7 +206,10 @@ class debugger(object):
         
         if not debug:
             debug = self.DEBUG
-        color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX]
+        if sys.platform == 'win32':
+            color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX]
+        else:
+            color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA]
         colorama.init()
         formatlist = ''
         arrow = colorama.Fore.YELLOW + ' -> '
@@ -233,7 +266,7 @@ class debugger(object):
         if debug:
             print formatlist
         if DEBUG_SERVER:
-            self.debug_server_client(formatlist)
+            self.debug_server_client(formatlist + " [%s]" % (PID))
         #if debug_server:
             #self.debug_server_client(formatlist)        
         return formatlist
@@ -269,8 +302,9 @@ def serve(host = '0.0.0.0', port = 50001):
             print "=" * (MAX_WIDTH - 3)
 
 def debug(defname = None, debug = None, debug_server = False, line_number = '', print_function_parameters = False, **kwargs):
-    if DEBUG_SERVER:
-        debug_server = True
+    isdebug = DEBUG
+    #if DEBUG_SERVER:
+        #debug_server = True
     if not defname:
         #print "inspect.stack =", inspect.stack()[1][2]
         defname = inspect.stack()[1][3]
@@ -305,6 +339,5 @@ def usage():
             sys.exit()
 
 if __name__ == '__main__':
-    pid = os.getpid()
-    print "PID:", pid
+    print "PID:", PID
     usage()
