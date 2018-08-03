@@ -1,6 +1,6 @@
 #-*- encoding: utf-8 -*-
 #encoding: utf-8
-VERSION = "0.1"
+VERSION = "X.X"
 import colorama
 import termcolor
 import inspect
@@ -16,7 +16,10 @@ import configparser
 import re
 import traceback
 PID = os.getpid()
-colorama.init(True)
+try:
+    colorama.init(True)
+except:
+    pass
 MAX_WIDTH = cmdw.getWidth()
 DEBUG = False
 if DEBUG == 1 or DEBUG == '1':
@@ -36,7 +39,7 @@ if DEBUG_SERVER == 0 or DEBUG_SERVER == '0':
     DEBUG_SERVER = False
 if DEBUG_SERVER == "True" or DEBUG_SERVER == True:
     DEBUG_SERVER = True
-#DEBUGGER_SERVER = ['192.168.100.100:50001']
+
 DEBUGGER_SERVER = ['127.0.0.1:50001']
 CONFIG_NAME = os.path.join(os.path.dirname(__file__), 'debug.ini')
 try:
@@ -60,20 +63,21 @@ FILENAME = ''
 if os.getenv('DEBUG_FILENAME'):
     FILENAME = os.getenv('DEBUG_FILENAME')
 
-def excepthook(type, value, tb):
-    traceback.format_exc(etype = type, value = value, tb = tb)
+#def excepthook(type, value, tb):
+    #traceback.format_exc(etype = type, value = value, tb = tb)
 
-try:    
-    sys.excepthook = excepthook
-except:
-    traceback.format_exc()
+#try:    
+    #sys.excepthook = excepthook
+#except:
+    #traceback.format_exc()
 
 
 class debugger(object):
     
     global VERSION
     global CONFIG_NAME
-    VERSION = "0.1"
+    
+    VERSION = "x.x"
     
     def __init__(self, defname = None, debug = None, filename = None, **kwargs):
         super(debugger, self)
@@ -86,8 +90,7 @@ class debugger(object):
         #print "self.FILENAME =", self.FILENAME
         if os.getenv('DEBUG') and os.getenv('DEBUG') == 1 or os.getenv('DEBUG') and os.getenv('DEBUG') == '1' or os.getenv('DEBUG') and os.getenv('DEBUG') == True or os.getenv('DEBUG') and os.getenv('DEBUG') == "True":
             self.DEBUG = True
-        #print "self.DEBUG =", self.DEBUG
-        #self.printlist(defname, debug, **kwargs)
+        self.color_random_error = False
         
     def version(cls):
         print "version:", VERSION
@@ -189,17 +192,12 @@ class debugger(object):
         self.DEBUG = debug
 
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
-        #print "DEBUG_SERVER =", DEBUG_SERVER
-        #print "linenumbers=", linenumbers
+        
         if DEBUG_SERVER:
             debug_server = True
-            
-        #if filename:
-            #filename = "[" + filename + "]"        
+
         if not filename:
             filename = self.FILENAME
-        #if filename:
-            #filename = "[" + self.FILENAME + "]"
         
         frame = inspect.currentframe()
         args, _, _, values = inspect.getargvalues(frame)
@@ -207,24 +205,41 @@ class debugger(object):
         if not debug:
             debug = self.DEBUG
         if sys.platform == 'win32':
-            color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX]
+            try:                
+                color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX]
+                self.color_random_error = False
+            except:
+                self.color_random_error = True
+                pass
         else:
             color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA]
-        colorama.init()
+        try:
+            colorama.init()
+        except:
+            pass
         formatlist = ''
-        arrow = colorama.Fore.YELLOW + ' -> '
+        try:
+            arrow = colorama.Fore.YELLOW + ' -> '
+        except:
+            arrow = ' -> '
         if print_function_parameters:
             for i in args:
                 if i == 'self':
                     pass
                 else:
-                    formatlist = termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
+                    try:
+                        formatlist = termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
+                    except:
+                        formatlist = str(i) + ": " + str(values[i]) + arrow
                     if not defname:
                         defname = str(inspect.stack()[1][3])
                     if filename == None:
                         filename = sys.argv[0]
                     linenumbers = str(inspect.stack()[1][2])
-                    formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " [" + termcolor.colored(str(linenumbers), 'white', 'on_cyan') + "] "
+                    try:
+                        formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " [" + termcolor.colored(str(linenumbers), 'white', 'on_cyan') + "] "
+                    except:
+                        formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " [" + str(linenumbers) + "] "
                     if debug:
                         print formatlist
                     if DEBUG_SERVER:
@@ -232,14 +247,21 @@ class debugger(object):
             return formatlist
         if not kwargs == {}:
             for i in kwargs:
-                try:
                 #formatlist += color_random_1[kwargs.keys().index(i)] + i + ": " + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(i)) + arrow
+                try:
                     formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(str(i))) + arrow
                 except:
-                    print termcolor.colored("DEBUGGER ERROR !", 'white', 'on_red', attrs= ['bold', 'blink'])
-                    traceback.format_exc()
+                    #print termcolor.colored("DEBUGGER ERROR !", 'white', 'on_red', attrs= ['bold', 'blink'])
+                    #traceback.format_exc()
+                    formatlist += str(i) + ": " + str(kwargs.get(str(i))) + arrow
         else:
-            formatlist += random.choice(color_random_1) + " start... " + arrow
+            try:
+                formatlist += random.choice(color_random_1) + " start... " + arrow
+            except:
+                try:
+                    formatlist += " start... " + arrow
+                except:
+                    formatlist += " start... " + ' -> '
         formatlist = formatlist[:-4]
         
         if defname:
@@ -250,10 +272,16 @@ class debugger(object):
                 #filename = inspect.stack()[2][3]
                 filename = sys.argv[0]
             #defname = defname + " [" + str(inspect.stack()[0][2]) + "] "
-            formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " " + termcolor.colored("[", "cyan") + termcolor.colored(str(linenumbers)[2:-2], 'white', 'on_cyan') + termcolor.colored("]", "cyan")
+            try:
+                formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " " + termcolor.colored("[", "cyan") + termcolor.colored(str(linenumbers)[2:-2], 'white', 'on_cyan') + termcolor.colored("]", "cyan")
+            except:
+                formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " " + "[" + str(linenumbers)[2:-2] + "]"
         else:
             defname = str(inspect.stack()[1][3])
-            line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
+            try:
+                line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
+            except:
+                line_number =  " [" + str(inspect.stack()[1][2]) + "] "
             if filename == None:
                 filename = sys.argv[0]
                 #filename = inspect.stack()[2][3]
@@ -262,9 +290,16 @@ class debugger(object):
                 #filename = module.__file__
                 #f = sys._current_frames().values()[0]
                 #filename = f.f_back.f_globals['__file__']
-            formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + line_number
+            try:
+                formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + line_number
+            except:
+                formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + " [" + str(inspect.stack()[1][2]) + "] " + line_number
         if debug:
-            print formatlist
+            try:
+                print formatlist
+                colorama.reinit()
+            except:
+                pass
         if DEBUG_SERVER:
             self.debug_server_client(formatlist + " [%s]" % (PID))
         #if debug_server:
