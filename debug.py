@@ -249,11 +249,23 @@ class debugger(object):
             for i in kwargs:
                 #formatlist += color_random_1[kwargs.keys().index(i)] + i + ": " + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(i)) + arrow
                 try:
-                    formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(str(i))) + arrow
+                    if str(kwargs.get(str(i))) == '':
+                        formatlist += termcolor.colored((str(i)), 'white', 'on_blue') + arrow
+                    else:   
+                        formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(str(i))) + arrow
                 except:
-                    #print termcolor.colored("DEBUGGER ERROR !", 'white', 'on_red', attrs= ['bold', 'blink'])
+                    try:
+                        print termcolor.colored("DEBUGGER ERROR !", 'white', 'on_red', attrs= ['bold', 'blink'])
+                    except:
+                        pass
                     #traceback.format_exc()
-                    formatlist += str(i) + ": " + str(kwargs.get(str(i))) + arrow
+                    try:
+                        if str(kwargs.get(str(i))) == '':
+                            formatlist += str(i) + arrow
+                        else:
+                            formatlist += str(i) + ": " + str(kwargs.get(str(i))) + arrow
+                    except:
+                        traceback.format_exc()
         else:
             try:
                 formatlist += random.choice(color_random_1) + " start... " + arrow
@@ -309,13 +321,13 @@ class debugger(object):
 def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
     global CONFIG_NAME
     try:
-        if read_config('DEBUGGER', 'HOST', CONFIG_NAME):
-            DEBUG_SERVER = read_config('DEBUGGER', 'HOST', CONFIG_NAME)
+        if read_config('RECEIVER', 'HOST', CONFIG_NAME):
+            RECEIVER_HOST = read_config('RECEIVER', 'HOST', CONFIG_NAME)
     except:
         pass
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    if DEBUGGER_SERVER:
-        for i in DEBUGGER_SERVER:
+    if RECEIVER_HOST:
+        for i in RECEIVER_HOST:
             if ":" in i:
                 host, port = str(i).strip().split(":")
                 port = int(port.strip())

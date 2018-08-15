@@ -4,3 +4,6 @@
 ^(?!a/c).*/build
 ^(?!a/c).*/dist
 .spec
+^.git/
+.gitignore
+
