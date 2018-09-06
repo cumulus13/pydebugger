@@ -1,5 +1,6 @@
 #-*- encoding: utf-8 -*-
 #encoding: utf-8
+from __future__ import print_function
 VERSION = "X.X"
 import colorama
 import termcolor
@@ -12,10 +13,13 @@ import sys
 import datetime
 from make_colors import make_colors
 import colorama
+import configset
 import configparser
 import re
 import traceback
+import codecs
 PID = os.getpid()
+
 try:
     colorama.init(True)
 except:
@@ -43,9 +47,21 @@ if DEBUG_SERVER == "True" or DEBUG_SERVER == True:
 DEBUGGER_SERVER = ['127.0.0.1:50001']
 CONFIG_NAME = os.path.join(os.path.dirname(__file__), 'debug.ini')
 try:
-    cfg = configparser.RawConfigParser(allow_no_value=True) 
-    cfg.read(CONFIG_NAME)
-    cfg = cfg.get('DEBUGGER', 'HOST')
+    cfg = configparser.RawConfigParser(allow_no_value=True)
+    cfg.optionxform = str
+    cfg.read = CONFIG_NAME
+    try:
+        cfg = cfg.get('DEBUGGER', 'HOST', value='0.0.0.0')
+    except:
+        try:
+            cfg.set('DEBUGGER', 'HOST', '0.0.0.0')
+        except configparser.NoSectionError:
+            cfg.add_section('DEBUGGER')
+            cfg.set('DEBUGGER', 'HOST', '0.0.0.0')
+        cfg_data = open(CONFIG_NAME, 'wb')
+        cfg.write(cfg_data)
+        cfg_data.close()
+        cfg = cfg.get('DEBUGGER', 'HOST', value='0.0.0.0')
     if ";" in cfg:
         DEBUGGER_SERVER = re.split(";", cfg)
     else:
@@ -91,9 +107,10 @@ class debugger(object):
         if os.getenv('DEBUG') and os.getenv('DEBUG') == 1 or os.getenv('DEBUG') and os.getenv('DEBUG') == '1' or os.getenv('DEBUG') and os.getenv('DEBUG') == True or os.getenv('DEBUG') and os.getenv('DEBUG') == "True":
             self.DEBUG = True
         self.color_random_error = False
+        # self.errors_count = 1
         
     def version(cls):
-        print "version:", VERSION
+        print("version:", VERSION)
         
     version = classmethod(version)
         
@@ -109,25 +126,25 @@ class debugger(object):
             #print "FILENAME ZZZ=", f
             CONFIG_NAME = os.path.join(os.getcwd(), filename)
             if verbosity:
-                print os.path.join(os.getcwd(), filename)
+                print(os.path.join(os.getcwd(), filename))
             return os.path.join(os.getcwd(), filename)
         elif os.path.isfile(filename):
             CONFIG_NAME = filename
             if verbosity:
-                print os.path.abspath(CONFIG_NAME)
+                print(os.path.abspath(CONFIG_NAME))
             return filename
         elif os.path.isfile(os.path.join(os.path.dirname(__file__), filename)):
             CONFIG_NAME = os.path.join(os.path.dirname(__file__), filename)
             if verbosity:
-                print os.path.join(os.path.dirname(__file__), filename)
+                print(os.path.join(os.path.dirname(__file__), filename))
             return os.path.join(os.path.dirname(__file__), filename)
         elif os.path.isfile(CONFIG_NAME):
             if verbosity:
-                print os.path.abspath(CONFIG_NAME)
+                print(os.path.abspath(CONFIG_NAME))
             return CONFIG_NAME
         elif os.path.isfile(os.path.join(os.path.dirname(__file__), CONFIG_NAME)):
             if verbosity:
-                print os.path.join(os.path.dirname(__file__), CONFIG_NAME)
+                print(os.path.join(os.path.dirname(__file__), CONFIG_NAME))
             return os.path.join(os.path.dirname(__file__), CONFIG_NAME)
         else:
             fcfg = os.path.join(os.path.dirname(__file__), CONFIG_NAME)
@@ -135,7 +152,7 @@ class debugger(object):
             f.close()
             filecfg = fcfg
             if verbosity:
-                print "CREATE:", os.path.abspath(filecfg)
+                print("CREATE:", os.path.abspath(filecfg))
             return filecfg
     
         
@@ -174,10 +191,20 @@ class debugger(object):
                     host = host.strip()
                 else:
                     host = i.strip()
-                s.sendto(msg, (host, port))
+                if host == '0.0.0.0':
+                    host = '127.0.0.1'
+                # print ("host =", host)
+                # print ("port =", port)
+                # print(str(msg))
+                try:
+                    s.sendto(bytes(msg.encode('utf-8')), (host, port))
+                except UnicodeDecodeError:
+                    pass
+                except:
+                    traceback.format_exc()
                 s.close()
         else:
-            print "self.read_config('DEBUGGER', 'HOST') =", self.read_config('DEBUGGER', 'HOST')
+            print("self.read_config('DEBUGGER', 'HOST') =", self.read_config('DEBUGGER', 'HOST'))
             if self.read_config('DEBUGGER', 'HOST'):
                 if ":" in self.read_config('DEBUGGER', 'HOST'):
                     host, port = str(self.read_config('DEBUGGER', 'HOST')).strip().split(":")
@@ -192,7 +219,10 @@ class debugger(object):
         self.DEBUG = debug
 
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
-        
+        if sys.stdout.encoding != 'cp850':
+            sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
+        if sys.stderr.encoding != 'cp850':
+            sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
         if DEBUG_SERVER:
             debug_server = True
 
@@ -241,7 +271,7 @@ class debugger(object):
                     except:
                         formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " [" + str(linenumbers) + "] "
                     if debug:
-                        print formatlist
+                        print(formatlist)
                     if DEBUG_SERVER:
                         self.debug_server_client(formatlist)            
             return formatlist
@@ -249,23 +279,41 @@ class debugger(object):
             for i in kwargs:
                 #formatlist += color_random_1[kwargs.keys().index(i)] + i + ": " + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(i)) + arrow
                 try:
-                    if str(kwargs.get(str(i))) == '':
+                    if kwargs.get(i) == '' or kwargs.get(i) == None:
                         formatlist += termcolor.colored((str(i)), 'white', 'on_blue') + arrow
                     else:   
-                        formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(str(i))) + arrow
+                        formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[2] + unicode(kwargs.get(i)) + arrow
                 except:
+                    # traceback.format_exc()
+                    if os.getenv('DEBUG_ERROR'):
+                        try:
+                            self.debug_server_client(traceback.format_exc(print_msg=False))
+                        except:
+                            print("Send traceback ERROR [290]")
+
                     try:
-                        print termcolor.colored("DEBUGGER ERROR !", 'white', 'on_red', attrs= ['bold', 'blink'])
+                        if os.getenv('DEBUG_ERROR'):
+                            print(termcolor.colored("DEBUGGER ERROR [001] !", 'white', 'on_red', attrs= ['bold', 'blink']))
                     except:
-                        pass
-                    #traceback.format_exc()
+                        # traceback.format_exc()
+                        if os.getenv('DEBUG_ERROR'):
+                            try:
+                                self.debug_server_client(traceback.format_exc(print_msg=False))
+                            except:
+                                print("Send traceback ERROR [300]")
                     try:
-                        if str(kwargs.get(str(i))) == '':
-                            formatlist += str(i) + arrow
+                        if kwargs.get(i) == '' or kwargs.get(i) == None:
+                            formatlist += unicode(i).encode('utf-8') + arrow
                         else:
-                            formatlist += str(i) + ": " + str(kwargs.get(str(i))) + arrow
+                            formatlist += str(i) + ": " + unicode(kwargs.get(i)) + arrow
+                    # except UnicodeDecodeError:
+                    #     pass
                     except:
-                        traceback.format_exc()
+                        if os.getenv('DEBUG_ERROR'):
+                            try:
+                                self.debug_server_client(traceback.format_exc(print_msg=False))
+                            except:
+                                print("Send traceback ERROR [316]")
         else:
             try:
                 formatlist += random.choice(color_random_1) + " start... " + arrow
@@ -308,7 +356,7 @@ class debugger(object):
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + " [" + str(inspect.stack()[1][2]) + "] " + line_number
         if debug:
             try:
-                print formatlist
+                print(formatlist)
                 colorama.reinit()
             except:
                 pass
@@ -334,6 +382,8 @@ def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
                 host = host.strip()
             else:
                 host = i.strip()
+            if host == "0.0.0.0":
+                host = '127.0.0.1'
             s.sendto(msg, (host, port))
             s.close()
 
@@ -341,12 +391,12 @@ def serve(host = '0.0.0.0', port = 50001):
     import socket
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
-    print make_colors("BIND: ", 'white', 'green') + make_colors(host, 'white', 'red', attrs= ['bold']) + ":" + make_colors(str(port), 'white', 'yellow', attrs= ['bold'])
+    print(make_colors("BIND: ", 'white', 'green') + make_colors(host, 'white', 'red', attrs= ['bold']) + ":" + make_colors(str(port), 'white', 'yellow', attrs= ['bold']))
     while 1:
         msg = s.recv(65565)
         if msg:
-            print msg
-            print "=" * (MAX_WIDTH - 3)
+            print(msg)
+            print("=" * (MAX_WIDTH - 3))
 
 def debug(defname = None, debug = None, debug_server = False, line_number = '', print_function_parameters = False, **kwargs):
     isdebug = DEBUG
@@ -359,6 +409,7 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
         #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
     c = debugger(defname, debug)
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
+    return msg
     
     #if DEBUG_SERVER:
         #debug_server_client(msg)
@@ -371,7 +422,7 @@ def usage():
     parser.add_argument('-b', '--host', action = 'store', help = 'Bind / listen ip address, default all network device: 0.0.0.0', default = '0.0.0.0', type = str)
     parser.add_argument('-p', '--port', action = 'store', help = 'Bind / listen port number, default is 50001', default = 50001, type = int)
     if len(sys.argv) == 1:
-        print "\n"
+        print("\n")
         parser.print_help()
         try:
             args = parser.parse_args()
@@ -386,5 +437,5 @@ def usage():
             sys.exit()
 
 if __name__ == '__main__':
-    print "PID:", PID
+    print("PID:", PID)
     usage()
