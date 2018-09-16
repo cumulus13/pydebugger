@@ -2,17 +2,22 @@
 #encoding: utf-8
 from __future__ import print_function
 VERSION = "X.X"
+import os
+import sys
 import colorama
 import termcolor
 import inspect
 import random
 import socket
-import cmdw
-import os
-import sys
+if sys.version_info.major == 3:
+    import cmdw3 as cmdw
+else:
+    import cmdw
 import datetime
-from make_colors import make_colors
-import colorama
+if sys.platform == 'win32':
+    from make_colors import make_colors
+else:
+    from make_colors_tc import make_colors
 import configset
 import configparser
 import re
@@ -20,10 +25,10 @@ import traceback
 import codecs
 PID = os.getpid()
 
-try:
-    colorama.init(True)
-except:
-    pass
+#try:
+    #colorama.init(True)
+#except:
+    #pass
 MAX_WIDTH = cmdw.getWidth()
 DEBUG = False
 if DEBUG == 1 or DEBUG == '1':
@@ -74,7 +79,9 @@ if os.getenv('DEBUGGER_SERVER'):
         DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER').strip().split(";")
     else:
         DEBUGGER_SERVER = [os.getenv('DEBUGGER_SERVER')]
-
+    
+#print("os.getenv('DEBUGGER_SERVER') =", os.getenv('DEBUGGER_SERVER'))
+#print("DEBUGGER_SERVER =", DEBUGGER_SERVER)
 FILENAME = ''
 if os.getenv('DEBUG_FILENAME'):
     FILENAME = os.getenv('DEBUG_FILENAME')
@@ -99,6 +106,7 @@ class debugger(object):
         super(debugger, self)
         self.DEBUG = debug
         self.FILENAME = filename
+        self.platform = sys.platform
         if DEBUG:
             self.DEBUG = DEBUG
         if FILENAME:
@@ -219,10 +227,11 @@ class debugger(object):
         self.DEBUG = debug
 
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
-        if sys.stdout.encoding != 'cp850':
-            sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
-        if sys.stderr.encoding != 'cp850':
-            sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
+        if sys.version_info.major == 2:
+            if sys.stdout.encoding != 'cp850':
+                sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
+            if sys.stderr.encoding != 'cp850':
+                sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
         if DEBUG_SERVER:
             debug_server = True
 
@@ -236,20 +245,25 @@ class debugger(object):
             debug = self.DEBUG
         if sys.platform == 'win32':
             try:                
-                color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX]
+                #color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.LIGHTWHITE_EX, colorama.Fore.LIGHTCYAN_EX, colorama.Fore.LIGHTMAGENTA_EX]
+                color_random_1 = ['green', 'yellow', 'lightwhite', 'lightcyan', 'lightmagenta']
                 self.color_random_error = False
             except:
                 self.color_random_error = True
                 pass
         else:
             color_random_1 = [colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA, colorama.Fore.GREEN, colorama.Fore.YELLOW, colorama.Fore.WHITE, colorama.Fore.CYAN, colorama.Fore.MAGENTA]
-        try:
-            colorama.init()
-        except:
-            pass
+        if not sys.platform == 'win32':
+            try:
+                colorama.init()
+            except:
+                pass
         formatlist = ''
         try:
-            arrow = colorama.Fore.YELLOW + ' -> '
+            if self.platform == 'win32':
+                arrow = make_colors(' -> ', 'yellow')
+            else:
+                arrow = colorama.Fore.YELLOW + ' -> '
         except:
             arrow = ' -> '
         if print_function_parameters:
@@ -258,7 +272,10 @@ class debugger(object):
                     pass
                 else:
                     try:
-                        formatlist = termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
+                        if sys.platform == 'win32':
+                            formatlist = make_colors((str(i) + ": "), 'white', 'on_blue') + make_colors(str(values[i]), color_random_1[int(args.index(i))]) + arrow
+                        else:
+                            formatlist = termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
                     except:
                         formatlist = str(i) + ": " + str(values[i]) + arrow
                     if not defname:
@@ -267,7 +284,10 @@ class debugger(object):
                         filename = sys.argv[0]
                     linenumbers = str(inspect.stack()[1][2])
                     try:
-                        formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " [" + termcolor.colored(str(linenumbers), 'white', 'on_cyan') + "] "
+                        if sys.platform == 'win32':
+                            formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " [" + make_colors(str(linenumbers), 'white', 'on_cyan') + "] "
+                        else:
+                            formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " [" + termcolor.colored(str(linenumbers), 'white', 'on_cyan') + "] "
                     except:
                         formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " [" + str(linenumbers) + "] "
                     if debug:
@@ -280,9 +300,21 @@ class debugger(object):
                 #formatlist += color_random_1[kwargs.keys().index(i)] + i + ": " + color_random_1[kwargs.keys().index(i)] + str(kwargs.get(i)) + arrow
                 try:
                     if kwargs.get(i) == '' or kwargs.get(i) == None:
-                        formatlist += termcolor.colored((str(i)), 'white', 'on_blue') + arrow
-                    else:   
-                        formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + color_random_1[2] + unicode(kwargs.get(i)) + arrow
+                        if sys.platform == 'win32':
+                            formatlist += make_colors((str(i)), 'white', 'on_blue') + arrow
+                        else:
+                            formatlist += termcolor.colored((str(i)), 'white', 'on_blue') + arrow
+                    else:
+                        if sys.version_info.major == 2:
+                            if sys.platform == 'win32':
+                                formatlist += make_colors((str(i) + ": "), 'white', 'on_blue') + make_colors(unicode(kwargs.get(i)), 'cyan') + arrow + make_colors("TYPE:", 'black', 'lightyellow') + make_colors(str(type(kwargs.get(i))), 'lightyellow') + arrow
+                            else:
+                                formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + termcolor.colored(unicode(kwargs.get(i)), 'blue') + arrow + termcolor.colored("TYPE:", 'black', 'on_yellow') + termcolor.colored(str(type(kwargs.get(i))), 'yellow') + arrow
+                        else:
+                            if sys.platform == 'win32':
+                                formatlist += make_colors((str(i) + ": "), 'white', 'on_blue') + make_colors(str(kwargs.get(i)), 'cyan') + arrow + make_colors("TYPE:", 'black', 'lightyellow') + make_colors(str(type(kwargs.get(i))), 'lightyellow') + arrow
+                            else:
+                                formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + termcolor.colored(str(kwargs.get(i)), 'blue') + arrow + termcolor.colored("TYPE:", 'black', 'on_yellow') + termcolor.colored(str(type(kwargs.get(i))), 'yellow') + arrow                        
                 except:
                     # traceback.format_exc()
                     if os.getenv('DEBUG_ERROR'):
@@ -303,9 +335,9 @@ class debugger(object):
                                 print("Send traceback ERROR [300]")
                     try:
                         if kwargs.get(i) == '' or kwargs.get(i) == None:
-                            formatlist += unicode(i).encode('utf-8') + arrow
+                            formatlist += str(i).encode('utf-8') + arrow
                         else:
-                            formatlist += str(i) + ": " + unicode(kwargs.get(i)) + arrow
+                            formatlist += str(i) + ": " + str(kwargs.get(i)) + arrow
                     # except UnicodeDecodeError:
                     #     pass
                     except:
@@ -316,7 +348,7 @@ class debugger(object):
                                 print("Send traceback ERROR [316]")
         else:
             try:
-                formatlist += random.choice(color_random_1) + " start... " + arrow
+                formatlist += " " + make_colors("start ... ", random.choice(color_random_1)) + arrow
             except:
                 try:
                     formatlist += " start... " + arrow
@@ -332,14 +364,21 @@ class debugger(object):
                 #filename = inspect.stack()[2][3]
                 filename = sys.argv[0]
             #defname = defname + " [" + str(inspect.stack()[0][2]) + "] "
+            filename = make_colors(filename, 'lightgreen')
             try:
-                formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " " + termcolor.colored("[", "cyan") + termcolor.colored(str(linenumbers)[2:-2], 'white', 'on_cyan') + termcolor.colored("]", "cyan")
+                if sys.platform == 'win32':
+                    formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " " + make_colors("[", "cyan") + make_colors(str(linenumbers)[2:-2], 'white', 'on_cyan') + make_colors("]", "cyan")
+                else:
+                    formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + "]" + " " + termcolor.colored("[", "cyan") + termcolor.colored(str(linenumbers)[2:-2], 'white', 'on_cyan') + termcolor.colored("]", "cyan")
             except:
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " " + "[" + str(linenumbers)[2:-2] + "]"
         else:
             defname = str(inspect.stack()[1][3])
             try:
-                line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
+                if sys.platform == 'win32':
+                    line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
+                else:
+                    line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
             except:
                 line_number =  " [" + str(inspect.stack()[1][2]) + "] "
             if filename == None:
@@ -351,13 +390,17 @@ class debugger(object):
                 #f = sys._current_frames().values()[0]
                 #filename = f.f_back.f_globals['__file__']
             try:
-                formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + line_number
+                if sys.platform == 'win32':
+                    formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + " [" + make_colors(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + line_number
+                else:
+                    formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + formatlist + " " + "[" + str(filename) + " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + line_number
             except:
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + " [" + str(inspect.stack()[1][2]) + "] " + line_number
         if debug:
             try:
                 print(formatlist)
-                colorama.reinit()
+                if not sys.platform == 'win32':
+                    colorama.reinit()
             except:
                 pass
         if DEBUG_SERVER:
@@ -386,14 +429,91 @@ def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
                 host = '127.0.0.1'
             s.sendto(msg, (host, port))
             s.close()
+            
+def debug_self(**kwargs):
+    return debug(**kwargs)
+
+def get_config(section, option, configname = 'debug.ini', value = ''):
+    global CONFIG_NAME
+    cfg = configparser.RawConfigParser(allow_no_value=True)
+    cfg.optionxform = str
+    
+    if configname:
+        configname = os.path.join(os.path.dirname(__file__), os.path.basename(configname))
+    else:
+        configname = CONFIG_NAME
+    
+    debug_self(configname = configname)    
+    cfg.read(configname)
+    
+    try:
+        data = cfg.get(section, option)
+    except:
+        try:
+            try:
+                cfg.set(section, option, value)
+            #except configparser.NoSectionError:
+            except:
+                cfg.add_section(section)
+                cfg.set(section, option, value)
+            #except configparser.NoOptionError:
+                #pass
+            cfg_data = open(configname,'wb')
+            cfg.write(cfg_data) 
+            cfg_data.close()  
+        except configparser.NoOptionError:
+            pass
+        except:
+            traceback.format_exc()
+        data = cfg.get(section, option)
+    return data    
 
 def serve(host = '0.0.0.0', port = 50001):
+    global DEBUGGER_SERVER
     import socket
+    host1 = ''
+    port1 = ''
+    if DEBUGGER_SERVER:
+        if isinstance(DEBUGGER_SERVER, list):
+            for i in DEBUGGER_SERVER:
+                if ":" in i:
+                    host1, port1 = str(i).split(":")
+                    port1 = int(port1)
+                else:
+                    host1 = i
+        else:
+            if ":" in DEBUGGER_SERVER:
+                host1, port1 = str(i).split(":")
+                port1 = int(port1)
+            else:
+                host1 = DEBUGGER_SERVER    
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((host, port))
-    print(make_colors("BIND: ", 'white', 'green') + make_colors(host, 'white', 'red', attrs= ['bold']) + ":" + make_colors(str(port), 'white', 'yellow', attrs= ['bold']))
+    if not host:
+        if get_config('DEBUGGER', 'HOST', value= '0.0.0.0'):
+            host = get_config('DEBUGGER', 'HOST')
+        else:
+            host = host1
+    if not port:
+        if get_config('DEBUGGER', 'PORT', value= '50001'):
+            port = get_config('DEBUGGER', 'PORT')
+            port = int(port)
+        else:
+            port = port1
+    #print ("DEBUGGER_SERVER =", DEBUGGER_SERVER)
+    if not host:
+        host = '127.0.0.1'
+    if not port:
+        port = 50001
     while 1:
-        msg = s.recv(65565)
+        try:
+            s.bind((host, int(port)))
+            break
+        except socket.error:
+            port = port + 1
+            
+    print(make_colors("BIND: ", 'white', 'green') + make_colors(host, 'white', 'red', attrs= ['bold']) + ":" + make_colors(str(port), 'black', 'yellow', attrs= ['bold']))
+    while 1:
+        msg = s.recv(6556500)
         if msg:
             print(msg)
             print("=" * (MAX_WIDTH - 3))
@@ -405,7 +525,10 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     if not defname:
         #print "inspect.stack =", inspect.stack()[1][2]
         defname = inspect.stack()[1][3]
-        line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
+        if sys.platform == 'win32':
+            line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
+        else:
+            line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
         #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
     c = debugger(defname, debug)
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
