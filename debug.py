@@ -545,9 +545,12 @@ class debugger(object):
             except:
                 pass
         else:
-            if os.getenv("DEBUG") == '1':
-                print(formatlist.encode('utf-8'))
-        if DEBUG_SERVER:
+            if os.getenv("DEBUG") == '1' or debug:
+                try:
+                    print(formatlist.encode('utf-8'))
+                except:
+                    pass
+        if DEBUG_SERVER or debug:
             self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
         #if debug_server:
             #self.debug_server_client(formatlist)
