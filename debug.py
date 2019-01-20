@@ -80,7 +80,7 @@ if os.getenv('DEBUGGER_SERVER'):
         DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER').strip().split(";")
     else:
         DEBUGGER_SERVER = [os.getenv('DEBUGGER_SERVER')]
-
+# print("DEBUGGER_SERVER =", DEBUGGER_SERVER)
 FILENAME = ''
 if os.getenv('DEBUG_FILENAME'):
     FILENAME = os.getenv('DEBUG_FILENAME')
@@ -279,13 +279,14 @@ class debugger(object):
                     host = '127.0.0.1'
                 # print ("host =", host)
                 # print ("port =", port)
-                # print(str(msg))
+                # print("message =", str(msg))
                 try:
                     s.sendto(bytes(msg.encode('utf-8')), (host, port))
                 except UnicodeDecodeError:
                     pass
                 except:
-                    traceback.format_exc()
+                    if os.getenv('DEBUG') == '1':
+                        traceback.format_exc()
                 s.close()
         else:
             print("self.read_config('DEBUGGER', 'HOST') =", self.read_config('DEBUGGER', 'HOST'))
@@ -465,7 +466,7 @@ class debugger(object):
         defname_parent1 = ''
         the_class = ''
         the_class1 = ''
-        if defname:
+        if defname and isinstance(defname, str):
             if filename == None:
                 #frame = inspect.stack()[1]
                 #module = inspect.getmodule(frame[0])
@@ -505,6 +506,7 @@ class debugger(object):
                 else:
                     defname_parent += "(%s)" % (termcolor.colored(the_class, 'white', 'blue')) + arrow
                 defname_parent1 += "(%s)" % (the_class) + arrow
+
             if not linenumbers:
                 try:
                     if sys.platform == 'win32':
@@ -517,8 +519,9 @@ class debugger(object):
                     self.track()
                     line_number =  " [" + str(inspect.stack()[1][2]) + "] "
             else:
+                line_number = linenumbers[1:] + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
                 linenumbers = " [" + make_colors(str(linenumbers), 'black', 'on_cyan') + "] " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
-                    
+
             if filename == None:
                 filename = sys.argv[0]
                 #filename = inspect.stack()[2][3]
@@ -530,11 +533,14 @@ class debugger(object):
             
             try:
                 if sys.platform == 'win32':
-                    formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'white', 'on_red') + defname_parent + formatlist + " " + "[" + make_colors(str(filename), 'lightgreen') + "] [" + make_colors(str(inspect.stack()[1][2]), 'black', 'on_cyan') + "] "  + line_number
+                    # formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'white', 'on_red') + defname_parent + formatlist + " " + "[" + make_colors(str(filename), 'lightgreen') + "] [" + make_colors(str(inspect.stack()[1][2]), 'black', 'on_cyan') + "] "  + line_number
+                    formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'white', 'on_red') + defname_parent + formatlist + " " + "[" + make_colors(str(filename), 'lightgreen') + "] " + line_number
                 else:
-                    formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + defname_parent + formatlist + " " + "[" + termcolor.colored(str(filename), 'green', attrs= ['bold']) + "] [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "  + line_number
+                    # formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + defname_parent + formatlist + " " + "[" + termcolor.colored(str(filename), 'green', attrs= ['bold']) + "] [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "  + line_number
+                    formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'white', 'on_red') + defname_parent + formatlist + " " + "[" + termcolor.colored(str(filename), 'green', attrs= ['bold']) + "] " + line_number
             except:
                 self.track()
+                # formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + defname_parent1 + formatlist + " " + "[" + str(filename) + "] [" + str(inspect.stack()[1][2]) + "] "  + line_number
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + defname_parent1 + formatlist + " " + "[" + str(filename) + "] [" + str(inspect.stack()[1][2]) + "] "  + line_number
         
         if self.track(True):
@@ -550,8 +556,10 @@ class debugger(object):
                     print(formatlist.encode('utf-8'))
                 except:
                     pass
+        
         if DEBUG_SERVER or debug:
-            self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
+            # self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
+            self.debug_server_client(formatlist)
         #if debug_server:
             #self.debug_server_client(formatlist)
         
