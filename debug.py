@@ -336,6 +336,7 @@ class debugger(object):
             
             
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
+    		 #print ("DEFNAME =", defname)
         #if sys.version_info.major == 2:            
             #if sys.stdout.encoding != 'cp65001':
                 #sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
@@ -485,26 +486,31 @@ class debugger(object):
             except:
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " "  + "[" + str(linenumbers)[2:-2] + "]"
         else:
+            #print ("XXX"*20)
             defname = str(inspect.stack()[1][3])
             try:
                 the_class = re.split("'|>|<|\.", str(inspect.stack()[1][0].f_locals.get('self').__class__))[-3]
             except:
                 pass
             if len(inspect.stack()) > 2:
+                #print ("inspect.stack() =", inspect.stack()
                 for h in inspect.stack()[2:]:
                     if isinstance(h[2], int):
                         if not h[3] == '<module>':
                             defname_parent1 += "[%s]" % (h[3]) + arrow
                             if sys.platform == 'win32':
-                                defname_parent += "[%s]" % (make_colors(h[3], 'lightred')) + arrow
+                                defname_parent += "[%s]" % (make_colors(h[3], 'lightred')) + "[%s]" % (make_colors(str(h[2]), 'lightwhite', 'lightred')) + arrow
                             else:
-                                defname_parent += "[%s]" % (termcolor.colored(h[3], 'red', attrs= ['bold'])) + arrow
+                                defname_parent += "[%s]" % (termcolor.colored(h[3], 'red', attrs=['bold'])) + \
+                                "[%s]" % (termcolor.colored(str(h[2]), 'red', 'on_white', attrs=['bold'])) + arrow
                 #defname_parent = inspect.stack()[1][3]
-            if the_class:
+            print ("the_class =", the_class)
+            print (type(the_class))           
+	    if the_class and not the_class == "NoneType":
                 if sys.platform == "win32":
                     defname_parent += "(%s)" % (make_colors(the_class, 'lightwhite', 'blue')) + arrow
                 else:
-                    defname_parent += "(%s)" % (termcolor.colored(the_class, 'white', 'blue')) + arrow
+                    defname_parent += "(%s)" % (termcolor.colored(the_class, 'white', 'on_blue')) + arrow
                 defname_parent1 += "(%s)" % (the_class) + arrow
 
             if not linenumbers:
@@ -520,7 +526,7 @@ class debugger(object):
                     line_number =  " [" + str(inspect.stack()[1][2]) + "] "
             else:
                 line_number = linenumbers[1:] + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
-                linenumbers = " [" + make_colors(str(linenumbers), 'black', 'on_cyan') + "] " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
+                linenumbers = " [" + make_colors(str(linenumbers), 'red', 'on_white') + "] " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
 
             if filename == None:
                 filename = sys.argv[0]
@@ -685,14 +691,14 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
         arrow = ' -> '    
     #if DEBUG_SERVER:
         #debug_server = True
-    if not defname:
+    #if not defname:
         #print "inspect.stack =", inspect.stack()[1][2]
-        defname = inspect.stack()[1][3]
+    #    defname = inspect.stack()[1][3]
     
     if sys.platform == 'win32':
-        line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'black', 'lightcyan') + "] "
+        line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite') + "] "
     else:
-        line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] "
+        line_number =  " [" + termcolor.colored(str(inspect.stack()[1][2]), 'red', 'on_white') + "] "
         #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
     c = debugger(defname, debug)
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
