@@ -342,7 +342,7 @@ class debugger(object):
                 #sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
             #if sys.stderr.encoding != 'cp850':
                 #sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
-        
+        cls = False
         formatlist = ''
         if DEBUG_SERVER:
             debug_server = True
@@ -407,21 +407,45 @@ class debugger(object):
                 try:
                     if kwargs.get(i) == '' or kwargs.get(i) == None:
                         if sys.platform == 'win32':
+			    if srt(i) == "cls" or str(i) == "clear":
+				#os.system('cls')
+				cls = True
                             formatlist += make_colors((str(i)), 'white', 'on_blue') + arrow
+			    #cls = False
                         else:
+			    if str(i) == "cls" or str(i) == "clear":
+				#os.system('clear')
+				cls = True
                             formatlist += termcolor.colored((str(i)), 'white', 'on_blue') + arrow
+			    #cls = False
                     else:
                         if sys.version_info.major == 2:
                             if sys.platform == 'win32':
+				if str(i) == 'cls' or str(i) == 'clear':
+				    #os.system('cls')
+				    cls = True
                                 formatlist += make_colors((str(i) + ": "), 'white', 'on_blue') + make_colors(unicode(kwargs.get(i)), 'lightcyan') + arrow + make_colors("TYPE:", 'black', 'lightyellow') + make_colors(str(type(kwargs.get(i))), 'lightyellow') + arrow + make_colors("LEN:", 'white', 'lightmagenta') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow 
+				#cls = False
                             else:
+				if str(i) == 'cls' or str(i) == 'clear':
+				    #os.system('clear')
+				    cls = True
                                 formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + termcolor.colored(unicode(kwargs.get(i)), 'cyan', attrs= ['bold']) + arrow + termcolor.colored("TYPE:", 'red', 'on_yellow') + termcolor.colored(str(type(kwargs.get(i))), 'yellow') + arrow + termcolor.colored("LEN:", 'white', 'on_magenta') + termcolor.colored(str(self.get_len(kwargs.get(i))), 'magenta', attrs= ['bold']) + arrow
+				#cls = False
                                 
                         else:
                             if sys.platform == 'win32':
+				if str(i) == 'cls' or str(i) == 'clear':
+				    #os.system('cls')
+				    cls = True
                                 formatlist += make_colors((str(i) + ": "), 'white', 'on_blue') + make_colors(str(kwargs.get(i)), 'cyan') + arrow + make_colors("TYPE:", 'black', 'lightyellow') + make_colors(str(type(kwargs.get(i))), 'lightyellow') + arrow + make_colors("LEN:", 'white', 'lightmagenta') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow
+				#cls = False
                             else:
+				if str(i) == 'cls' or str(i) == 'clear':
+				    #os.system('clear')
+				    cls = True
                                 formatlist += termcolor.colored((str(i) + ": "), 'white', 'on_blue') + termcolor.colored(str(kwargs.get(i)), 'cyan', attrs= ['bold']) + arrow + termcolor.colored("TYPE:", 'red', 'on_yellow') + termcolor.colored(str(type(kwargs.get(i))), 'yellow') + arrow + termcolor.colored("LEN:", 'white', 'magenta') + termcolor.colored(str(self.get_len(kwargs.get(i))), 'magenta', attrs= ['bold']) + arrow                        
+				#cls = False
                 except:
                     if os.getenv('DEBUG'):
                         traceback.format_exc()
@@ -559,13 +583,17 @@ class debugger(object):
         else:
             if os.getenv("DEBUG") == '1' or debug:
                 try:
-                    print(formatlist.encode('utf-8'))
+		    if not formatlist == 'cls':
+                        print(formatlist.encode('utf-8'))
                 except:
                     pass
         
         if DEBUG_SERVER or debug:
             # self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
+	    if cls:
+		formatlist = 'cls'
             self.debug_server_client(formatlist)
+	cls = False
         #if debug_server:
             #self.debug_server_client(formatlist)
         
@@ -677,7 +705,13 @@ def serve(host = '0.0.0.0', port = 50001):
     while 1:
         msg = s.recv(6556500)
         if msg:
-            print(msg)
+	    if msg == 'cls' or msg == 'clear':
+		if sys.platform == 'win32':
+		    os.system('cls')
+		else:
+		    os.system('clear')
+	    if not msg == 'cls' and not msg == 'clear':
+                print(msg)
             print("=" * (MAX_WIDTH - 3))
 
 def debug(defname = None, debug = None, debug_server = False, line_number = '', print_function_parameters = False, **kwargs):

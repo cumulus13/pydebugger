@@ -6,9 +6,11 @@ class parent(object):
 		super(parent, self)
 
 	def test_a(self):
+		#debug.debug('cls')
 		print "TEST A"
 		print "inspect.stack A =", inspect.stack()#[0][1]
 		print "-"*50
+		debug.debug(cls='cls')
 		defname = str(inspect.stack()[1][3])
 		print "defname =", defname
 		debug.debug(defname_x=defname)		
