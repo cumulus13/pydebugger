@@ -499,9 +499,9 @@ class debugger(object):
                         if not h[3] == '<module>':
                             defname_parent1 += "[%s]" % (h[3]) + arrow
                             if sys.platform == 'win32':
-                                defname_parent += "[%s]" % (make_colors(h[3], 'lightred')) + "[%s]" % (make_colors(str(h[2]), 'lightwhite', 'lightred')) + arrow
+                                defname_parent += "%s" % (make_colors(h[3], 'lightred')) + "[%s]" % (make_colors(str(h[2]), 'lightwhite', 'lightred')) + arrow
                             else:
-                                defname_parent += "[%s]" % (termcolor.colored(h[3], 'red', attrs=['bold'])) + \
+                                defname_parent += "%s" % (termcolor.colored(h[3], 'red', attrs=['bold'])) + \
                                 "[%s]" % (termcolor.colored(str(h[2]), 'red', 'on_white', attrs=['bold'])) + arrow
                 #defname_parent = inspect.stack()[1][3]
             #print ("the_class =", the_class)
