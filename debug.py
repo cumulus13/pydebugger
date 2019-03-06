@@ -504,8 +504,8 @@ class debugger(object):
                                 defname_parent += "[%s]" % (termcolor.colored(h[3], 'red', attrs=['bold'])) + \
                                 "[%s]" % (termcolor.colored(str(h[2]), 'red', 'on_white', attrs=['bold'])) + arrow
                 #defname_parent = inspect.stack()[1][3]
-            print ("the_class =", the_class)
-            print (type(the_class))           
+            #print ("the_class =", the_class)
+            #print (type(the_class))           
 	    if the_class and not the_class == "NoneType":
                 if sys.platform == "win32":
                     defname_parent += "(%s)" % (make_colors(the_class, 'lightwhite', 'blue')) + arrow
