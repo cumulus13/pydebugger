@@ -33,6 +33,7 @@ setup(
         'termcolor',
         'configset',
         'cmdw',
+        'configparser'
     ],
     entry_points = {
          "console_scripts": [
