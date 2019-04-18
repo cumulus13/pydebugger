@@ -1,3 +1,0 @@
-make_colors>=3.12
-colorama
-termcolor
