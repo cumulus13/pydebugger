@@ -29,8 +29,15 @@ setup(
     install_requires=[
         'make_colors>=3.12',
         'colorama',
-        'termcolor'
+        'termcolor',
+        'configset',
+        'cmdw',
     ],
+    entry_points = {
+         "console_scripts": [
+             "pydebugger = pydebugger.__main__:main",
+         ]
+    },
     include_package_data=True,
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     classifiers=[

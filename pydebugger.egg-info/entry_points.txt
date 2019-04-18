@@ -1,0 +1,3 @@
+[console_scripts]
+pydebugger = pydebugger.__main__:main
+

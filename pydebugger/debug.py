@@ -9,17 +9,13 @@ import termcolor
 import inspect
 import random
 import socket
-if sys.version_info.major == 3:
-    import cmdw3 as cmdw
-else:
-    import cmdw
+import cmdw
 import datetime
 if sys.platform == 'win32':
     from make_colors import make_colors
 else:
     from make_colors_tc import make_colors
 import configparser
-import ConfigParser
 import re
 import traceback
 import codecs

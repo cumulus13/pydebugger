@@ -1,0 +1,16 @@
+README.rst
+setup.cfg
+setup.py
+pydebugger/__init__.py
+pydebugger/__main__.py
+pydebugger/debug.py
+pydebugger/debug2.py
+pydebugger/test.py
+pydebugger/test2.py
+pydebugger/test3.py
+pydebugger.egg-info/PKG-INFO
+pydebugger.egg-info/SOURCES.txt
+pydebugger.egg-info/dependency_links.txt
+pydebugger.egg-info/entry_points.txt
+pydebugger.egg-info/requires.txt
+pydebugger.egg-info/top_level.txt
