@@ -28,6 +28,7 @@ setup(
     packages=["pydebugger"],
     install_requires=[
         'make_colors>=3.12',
+        'make_colors_tc',
         'colorama',
         'termcolor',
         'configset',
