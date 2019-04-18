@@ -1,7 +1,7 @@
 pydebugger
 ==================
 
-This is make command line text colored
+print objects with colored with less info
 
 
 Installing
