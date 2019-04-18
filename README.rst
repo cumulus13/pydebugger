@@ -60,6 +60,6 @@ Support
 Links
 -----
 
-*   License: `BSD <https://bitbucket.org/licface/pydebugger/blob/master/LICENSE.rst>`_
+*   License: `BSD <https://bitbucket.org/licface/pydebugger/src/default/LICENSE.rst>`_
 *   Code: https://bitbucket.org/licface/pydebugger
 *   Issue tracker: https://bitbucket.org/licface/pydebugger/issues
