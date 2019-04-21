@@ -94,7 +94,7 @@ if os.getenv('DEBUG_FILENAME'):
     #traceback.format_exc()
 
 class configset(object):
-    cfg = ConfigParser.RawConfigParser(allow_no_value=True)
+    cfg = configparser.RawConfigParser(allow_no_value=True)
     cfg.optionxform = str
     THIS_PATH = os.path.dirname(__file__)
     # configname ='conf.ini'
@@ -104,7 +104,7 @@ class configset(object):
         super(configset, self)
         global CONFIG_NAME
         global PATH
-        self.cfg = ConfigParser.RawConfigParser(allow_no_value=True)
+        self.cfg = configparser.RawConfigParser(allow_no_value=True)
         self.cfg.optionxform = str        
         self.configname = CONFIG_NAME
         if self.configname:
@@ -185,15 +185,15 @@ class configset(object):
         if cfg:
             cfg.read(filename)
         else:
-            cfg = ConfigParser.RawConfigParser(allow_no_value=True)
+            cfg = configparser.RawConfigParser(allow_no_value=True)
             cfg.optionxform = str
             cfg.read(filename)
         try:
             cfg.set(section, option, value)
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             cfg.add_section(section)
             cfg.set(section, option, value)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             cfg.set(section, option, value)
 
         if os.path.isfile(filename):
@@ -252,7 +252,7 @@ class debugger(object):
         self.CONFIG = configset()
         self.CONFIG.configname = CONFIG_NAME
         #print ("CONFIG_NAME =", CONFIG_NAME)
-        #self.CONFIG = ConfigParser.RawConfigParser(allow_no_value=True)
+        #self.CONFIG = configparser.RawConfigParser(allow_no_value=True)
         #self.CONFIG.opionxform = str
         #self.CONFIG.read(CONFIG_NAME)
         self.read_config = self.CONFIG.read_config

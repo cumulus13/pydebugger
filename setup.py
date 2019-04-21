@@ -37,9 +37,10 @@ setup(
     ],
     entry_points = {
          "console_scripts": [
-             "pydebugger = pydebugger.__main__:main",
+             "pydebugger = pydebugger.__main__.py",
          ]
     },
+    data_files=['__version__.py', 'README.rst', 'LICENSE.rst'],
     include_package_data=True,
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     classifiers=[
