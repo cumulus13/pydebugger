@@ -37,7 +37,7 @@ setup(
     ],
     entry_points = {
          "console_scripts": [
-             "pydebugger = pydebugger.__main__.py",
+             "pydebugger = pydebugger.debug:usage",
          ]
     },
     data_files=['__version__.py', 'README.rst', 'LICENSE.rst'],
