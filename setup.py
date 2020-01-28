@@ -33,6 +33,7 @@ setup(
     maintainer_email="cumulus13@gmail.com",
     description="print objects with colored with less info",
     long_description=readme,
+    long_description_content_type="text/markdown",
     packages=["pydebugger"],
     install_requires=[
         'make_colors>=3.12',
