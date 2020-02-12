@@ -20,7 +20,7 @@ import re
 import traceback
 import codecs
 PID = os.getpid()
-ATTR_NAME = ''
+#ATTR_NAME = ''
 
 MAX_WIDTH = cmdw.getWidth()
 
@@ -400,10 +400,10 @@ class debugger(object):
                         self.debug_server_client(formatlist)            
             return formatlist
         if not kwargs == {}:
-            global ATTR_NAME
+            #global ATTR_NAME
             for i in kwargs:
                 i = i.encode('utf-8')
-                ATTR_NAME = str(ATTR_NAME).encode('utf-8')
+                #ATTR_NAME = str(ATTR_NAME).encode('utf-8')
                 try:
                     if kwargs.get(i) == '' or kwargs.get(i) == None:
                         if sys.platform == 'win32':
