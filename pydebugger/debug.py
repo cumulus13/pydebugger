@@ -403,7 +403,7 @@ class debugger(object):
             global ATTR_NAME
             for i in kwargs:
                 i = i.encode('utf-8')
-                ATTR_NAME = ATTR_NAME.encode('utf-8')
+                ATTR_NAME = str(ATTR_NAME).encode('utf-8')
                 try:
                     if kwargs.get(i) == '' or kwargs.get(i) == None:
                         if sys.platform == 'win32':
