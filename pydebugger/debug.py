@@ -219,10 +219,11 @@ class configset(object):
         try:
             data = self.cfg.get(section, option)
         except:
-            if os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
-                traceback.format_exc()
-            else:
-                traceback.format_exc(print_msg= False)
+            #if os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
+            #    traceback.format_exc()
+            #else:
+                #traceback.format_exc(print_msg= False)
+            pass
             self.write_config(section, option, filename, value)
             data = configset.cfg.get(section, option)
         return data
@@ -273,8 +274,14 @@ class debugger(object):
                     host, port = str(i).strip().split(":")
                     port = int(port.strip())
                     host = host.strip()
+                    if not host:
+                        host = '127.0.0.1'
                 else:
-                    host = i.strip()
+                    if str(i).isdigit():
+                        host = '127.0.0.1'
+                        port = int(i)
+                    else:
+                        host = i.strip()
                 if host == '0.0.0.0':
                     host = '127.0.0.1'
                 # print ("host =", host)
@@ -659,7 +666,9 @@ def get_config(section, option, configname = 'debug.ini', value = ''):
         data = cfg.get(section, option)
     return data    
 
-def serve(host = '0.0.0.0', port = 50001):
+def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
+    if on_top:
+        set_detach(center = center, on_top = on_top)
     global DEBUGGER_SERVER
     import socket
     host1 = ''
@@ -670,14 +679,24 @@ def serve(host = '0.0.0.0', port = 50001):
                 if ":" in i:
                     host1, port1 = str(i).split(":")
                     port1 = int(port1)
+                    if not host1:
+                        host1 = '127.0.0.1'
                 else:
-                    host1 = i
+                    if str(i).isdigit():
+                        port1 = int(i)
+                    else:
+                        host1 = i
         else:
             if ":" in DEBUGGER_SERVER:
-                host1, port1 = str(i).split(":")
+                host1, port1 = str(DEBUGGER_SERVER).split(":")
                 port1 = int(port1)
+                if not host1:
+                    host1 = '127.0.0.1'
             else:
-                host1 = DEBUGGER_SERVER    
+                if str(DEBUGGER_SERVER).isdigit():
+                    port1 = int(i)
+                else:
+                    host1 = DEBUGGER_SERVER
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     if not host:
         if get_config('DEBUGGER', 'HOST', value= '0.0.0.0'):
@@ -711,8 +730,9 @@ def serve(host = '0.0.0.0', port = 50001):
                     os.system('cls')
                 else:
                     os.system('clear')
-            if not msg == 'cls' and not msg == 'clear':
-                print(msg)
+            else:
+                #if not msg == 'cls' and not msg == 'clear':
+                print(str(msg))
             print("=" * (MAX_WIDTH - 3))
 
 def debug(defname = None, debug = None, debug_server = False, line_number = '', print_function_parameters = False, **kwargs):
@@ -744,24 +764,35 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
         #debug_server_client(msg)
     #if debug_server:
         #debug_server_client(msg)
+        
+def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer_column = 9000, buffer_row = 77, on_top = True):
+    from dcmd import dcmd
+    setting = dcmd.dcmd()
+    setting.setBuffer(buffer_row, buffer_column)
+    screensize = setting.getScreenSize()
+    setting.setSize(width, height, screensize[0] - width, y, center)
+    if on_top:
+        setting.setAlwaysOnTop(width, height, screensize[0] - width, y, center)
 
 def usage():
     import argparse
     parser = argparse.ArgumentParser(description= 'run debugger as server receive debug text default port is 50001', version= "1.0", formatter_class= argparse.RawTextHelpFormatter)
     parser.add_argument('-b', '--host', action = 'store', help = 'Bind / listen ip address, default all network device: 0.0.0.0', default = '0.0.0.0', type = str)
     parser.add_argument('-p', '--port', action = 'store', help = 'Bind / listen port number, default is 50001', default = 50001, type = int)
+    parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
+    parser.add_argument('-c', '--center', action = 'store_true', help = 'Centering window')
     if len(sys.argv) == 1:
         print("\n")
         parser.print_help()
         try:
             args = parser.parse_args()
-            serve(args.host, args.port)
+            serve(args.host, args.port, args.on_top, args.center)
         except KeyboardInterrupt:
             sys.exit()
     else:
         try:
             args = parser.parse_args()
-            serve(args.host, args.port)
+            serve(args.host, args.port, args.on_top, args.center)
         except KeyboardInterrupt:
             sys.exit()
 
