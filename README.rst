@@ -5,7 +5,7 @@ print objects with colored with less info
 
 
 Installing
-----------
+-----------
 
 Install and update using `pip`_:
 
@@ -52,13 +52,13 @@ or you just run "debug.py" to provider debug server with Client support OS Envir
 
 
 Support
-------
+--------
 
 *   Python 2.7 +, Python 3.x
 *   Windows, Linux
 
 Links
------
+------
 
 *   License: `BSD <https://bitbucket.org/licface/pydebugger/src/default/LICENSE.rst>`_
 *   Code: https://bitbucket.org/licface/pydebugger

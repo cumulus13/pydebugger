@@ -37,9 +37,6 @@ setup(
     packages=["pydebugger"],
     install_requires=[
         'make_colors>=3.12',
-        'make_colors_tc',
-        'colorama',
-        'termcolor',
         'configset',
         'cmdw',
         'configparser'
@@ -51,7 +48,7 @@ setup(
     },
     data_files=['__version__.py', 'README.rst', 'LICENSE.rst'],
     include_package_data=True,
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+    python_requires=">=2.7",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
