@@ -17,7 +17,6 @@ import traceback
 PID = os.getpid()
 
 MAX_WIDTH = cmdw.getWidth()
-#print("debug MAX_WIDTH =", MAX_WIDTH)
 
 DEBUG = False
 if DEBUG == 1 or DEBUG == '1':
@@ -52,17 +51,17 @@ try:
     cfg.optionxform = str
     cfg.read(CONFIG_NAME)
     try:
-        cfg = cfg.get('DEBUGGER', 'HOST', value='0.0.0.0')
+        cfg = cfg.get('DEBUGGER', 'HOST')
     except:
         try:
             cfg.set('DEBUGGER', 'HOST', '0.0.0.0')
         except configparser.NoSectionError:
             cfg.add_section('DEBUGGER')
             cfg.set('DEBUGGER', 'HOST', '0.0.0.0')
-        cfg_data = open(CONFIG_NAME, 'wb')
+        cfg_data = open(CONFIG_NAME, 'w')
         cfg.write(cfg_data)
         cfg_data.close()
-        cfg = cfg.get('DEBUGGER', 'HOST', value='0.0.0.0')
+        cfg = cfg.get('DEBUGGER', 'HOST')
     if ";" in cfg:
         DEBUGGER_SERVER = re.split(";", cfg)
     else:
@@ -278,8 +277,8 @@ class debugger(object):
                 except UnicodeDecodeError:
                     pass
                 except:
-                    if os.getenv('DEBUG') == '1':
-                        traceback.format_exc()
+                    #if os.getenv('DEBUG') == '1':
+                    traceback.format_exc()
                 s.close()
         else:
             print("self.read_config('DEBUGGER', 'HOST') =", self.read_config('DEBUGGER', 'HOST'))
@@ -297,13 +296,14 @@ class debugger(object):
         self.DEBUG = debug
 
     def get_len(self, objects):
-        if isinstance(objects, list):
-            return len(objects)
-        elif isinstance(objects, dict):
+        if isinstance(objects, list) or isinstance(objects, tuple) or isinstance(objects, dict):
             return len(objects)
         else:
             if sys.platform == 'win32':
-                return len(unicode(objects))
+                if sys.version_info.major == 2:
+                    return len(unicode(objects))
+                else:
+                    return len(str(objects))
             else:
                 return len(str(objects))
 
@@ -329,12 +329,6 @@ class debugger(object):
 
 
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
-        #print ("DEFNAME =", defname)
-        #if sys.version_info.major == 2:            
-            #if sys.stdout.encoding != 'cp65001':
-                #sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
-            #if sys.stderr.encoding != 'cp850':
-                #sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
         
         cls = False
         formatlist = ''
@@ -385,7 +379,8 @@ class debugger(object):
             return formatlist
         if not kwargs == {}:
             for i in kwargs:
-                i = i.encode('utf-8')
+                if sys.version_info.major == 2:
+                    i = i.encode('utf-8')
                 if str(i) == "cls" or str(i) == "clear":
                     cls = True                
                 try:
@@ -393,10 +388,10 @@ class debugger(object):
                         formatlist += make_colors((str(i)), 'lw', 'bl') + arrow
                     else:
                         if sys.version_info.major == 2:
-                            formatlist += make_colors((str(i) + ": "), 'lw', 'lb') + make_colors(unicode(kwargs.get(i)), 'lightcyan') + arrow + make_colors("TYPE:", 'b', 'lc') + make_colors(str(type(kwargs.get(i))), 'yellow') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow 
+                            formatlist += make_colors(str(i) + ": ", 'b', 'ly') + make_colors(unicode(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'b', 'ly') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow 
                         else:
-                            formatlist += make_colors((str(i) + ": "), 'lw', 'bl') + make_colors(str(kwargs.get(i)), 'cyan') + arrow + make_colors("TYPE:", 'black', 'ly') + make_colors(str(type(kwargs.get(i))), 'lightyellow') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow
-                except: 
+                            formatlist += make_colors((str(i) + ": "), 'b', 'ly') + make_colors(str(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'black', 'ly') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow
+                except:
                     if os.getenv('DEBUG'):
                         traceback.format_exc()
                     if os.getenv('DEBUG_ERROR'):
@@ -453,7 +448,6 @@ class debugger(object):
             except:
                 pass
             if len(inspect.stack()) > 2:
-                #print ("inspect.stack() =", inspect.stack()
                 for h in inspect.stack()[3:]:
                     if isinstance(h[2], int):
                         if not h[3] == '<module>':
@@ -494,7 +488,10 @@ class debugger(object):
             if os.getenv("DEBUG") == '1' or debug or DEBUG == '1' or DEBUG == True:
                 try:
                     if not formatlist == 'cls':
-                        print(formatlist.encode('utf-8'))
+                        if sys.version_info.major == 2:
+                            print(formatlist.encode('utf-8'))
+                        else:
+                            print(formatlist)
                 except:
                     print("TRACEBACK =", traceback.format_exc())
 
@@ -528,6 +525,7 @@ def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
                 host = i.strip()
             if host == "0.0.0.0":
                 host = '127.0.0.1'
+            
             s.sendto(msg, (host, port))
             s.close()
 
@@ -634,9 +632,11 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 else:
                     os.system('clear')
             else:
-                #if not msg == 'cls' and not msg == 'clear':
                 print(str(msg))
-            print("=" * (MAX_WIDTH - 3))
+            if sys.platform == 'win32':
+                print("=" * (MAX_WIDTH - 3))
+            else:
+                print("=" * ((MAX_WIDTH * 2) - 3))
 
 def debug(defname = None, debug = None, debug_server = False, line_number = '', print_function_parameters = False, **kwargs):
     
@@ -654,7 +654,7 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
     
     return msg
-    
+
 def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer_column = 9000, buffer_row = 77, on_top = True):
     from dcmd import dcmd
     setting = dcmd.dcmd()
