@@ -16,3 +16,139 @@ NoSectionError: No section: 'COLORS'
     raise NoSectionError(section)
 NoSectionError: No section: 'DEBUG'
 
+2020:09:23 20:13:42:567404 ~ Traceback (most recent call last):
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\windows.py", line 214, in write
+    self.fp.write(s[start:end])
+OSError: [Errno 22] Invalid argument
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\ui.py", line 1155, in write
+    dest.write(msg)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\windows.py", line 220, in write
+    raise IOError(errno.EPIPE, 'Broken pipe')
+BrokenPipeError: [Errno 32] Broken pipe
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 462, in _runcatchfunc
+    return _dispatch(req)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1226, in _dispatch
+    lui, repo, cmd, fullargs, ui, options, d, cmdpats, cmdoptions
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 910, in runcommand
+    ret = _runcommand(ui, options, cmd, d)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1237, in _runcommand
+    return cmdfunc()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1223, in <lambda>
+    d = lambda: util.checksignature(func)(ui, *args, **strcmdopt)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\util.py", line 1865, in check
+    return func(*args, **kwargs)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\commands.py", line 4740, in log
+    displayfn(ui, repo, revs, displayer, getcopies)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\logcmdutil.py", line 1071, in displayrevs
+    displayer.flush(ctx)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\logcmdutil.py", line 264, in flush
+    self.ui.write(self.hunk[rev])
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\ui.py", line 1157, in write
+    raise error.StdioError(err)
+mercurial.error.StdioError: [Errno 32] Broken pipe
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 481, in _callcatch
+    return scmutil.callcatch(ui, func)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\scmutil.py", line 152, in callcatch
+    return func()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 464, in _runcatchfunc
+    ui.flush()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\ui.py", line 1230, in flush
+    self._fout.flush()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\windows.py", line 224, in flush
+    return self.fp.flush()
+ValueError: I/O operation on closed file.
+
+2020:09:23 20:14:44:234703 ~ Traceback (most recent call last):
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 481, in _callcatch
+    return scmutil.callcatch(ui, func)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\scmutil.py", line 152, in callcatch
+    return func()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 462, in _runcatchfunc
+    return _dispatch(req)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1226, in _dispatch
+    lui, repo, cmd, fullargs, ui, options, d, cmdpats, cmdoptions
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 910, in runcommand
+    ret = _runcommand(ui, options, cmd, d)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1237, in _runcommand
+    return cmdfunc()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1223, in <lambda>
+    d = lambda: util.checksignature(func)(ui, *args, **strcmdopt)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\util.py", line 1865, in check
+    return func(*args, **kwargs)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\commands.py", line 5671, in push
+    opargs=opargs,
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\util.py", line 64, in inner
+    return f(*args, **kwargs)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\__init__.py", line 400, in exchangepush
+    pushop.cgresult = repo.githandler.push(remote.path, revs, force)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\git_handler.py", line 408, in push
+    old_refs, new_refs = self.upload_pack(remote, revs, force)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\git_handler.py", line 1116, in upload_pack
+    progress=callback)
+  File "C:\SDK\Anaconda3\lib\site-packages\dulwich\client.py", line 830, in send_pack
+    proto, unused_can_read, stderr = self._connect(b'receive-pack', path)
+  File "C:\SDK\Anaconda3\lib\site-packages\dulwich\client.py", line 1449, in _connect
+    **kwargs)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\_ssh.py", line 29, in run_command
+    stdout=subprocess.PIPE)
+  File "C:\SDK\Anaconda3\lib\subprocess.py", line 775, in __init__
+    restore_signals, start_new_session)
+  File "C:\SDK\Anaconda3\lib\subprocess.py", line 1119, in _execute_child
+    args = list2cmdline(args)
+  File "C:\SDK\Anaconda3\lib\subprocess.py", line 530, in list2cmdline
+    needquote = (" " in arg) or ("\t" in arg) or not arg
+TypeError: argument of type 'int' is not iterable
+
+2020:09:23 20:18:26:935452 ~ Traceback (most recent call last):
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 481, in _callcatch
+    return scmutil.callcatch(ui, func)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\scmutil.py", line 152, in callcatch
+    return func()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 462, in _runcatchfunc
+    return _dispatch(req)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1226, in _dispatch
+    lui, repo, cmd, fullargs, ui, options, d, cmdpats, cmdoptions
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 910, in runcommand
+    ret = _runcommand(ui, options, cmd, d)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1237, in _runcommand
+    return cmdfunc()
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\dispatch.py", line 1223, in <lambda>
+    d = lambda: util.checksignature(func)(ui, *args, **strcmdopt)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\util.py", line 1865, in check
+    return func(*args, **kwargs)
+  File "C:\SDK\Anaconda3\lib\site-packages\mercurial\commands.py", line 5671, in push
+    opargs=opargs,
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\util.py", line 64, in inner
+    return f(*args, **kwargs)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\__init__.py", line 400, in exchangepush
+    pushop.cgresult = repo.githandler.push(remote.path, revs, force)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\git_handler.py", line 408, in push
+    old_refs, new_refs = self.upload_pack(remote, revs, force)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\git_handler.py", line 1116, in upload_pack
+    progress=callback)
+  File "C:\SDK\Anaconda3\lib\site-packages\dulwich\client.py", line 830, in send_pack
+    proto, unused_can_read, stderr = self._connect(b'receive-pack', path)
+  File "C:\SDK\Anaconda3\lib\site-packages\dulwich\client.py", line 1449, in _connect
+    **kwargs)
+  File "C:\SDK\Anaconda3\lib\site-packages\hggit\_ssh.py", line 29, in run_command
+    stdout=subprocess.PIPE)
+  File "C:\SDK\Anaconda3\lib\subprocess.py", line 775, in __init__
+    restore_signals, start_new_session)
+  File "C:\SDK\Anaconda3\lib\subprocess.py", line 1119, in _execute_child
+    args = list2cmdline(args)
+  File "C:\SDK\Anaconda3\lib\subprocess.py", line 530, in list2cmdline
+    needquote = (" " in arg) or ("\t" in arg) or not arg
+TypeError: argument of type 'int' is not iterable
+
