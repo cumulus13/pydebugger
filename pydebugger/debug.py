@@ -13,9 +13,10 @@ from make_colors import make_colors
 import configparser
 import re
 import traceback
-#import codecs
+if not sys.platform == 'win32':
+    import ctypes
 PID = os.getpid()
-
+HANDLE = None
 MAX_WIDTH = cmdw.getWidth()
 
 DEBUG = False
@@ -83,8 +84,6 @@ class configset(object):
     cfg = configparser.RawConfigParser(allow_no_value=True)
     cfg.optionxform = str
     THIS_PATH = os.path.dirname(__file__)
-    # configname ='conf.ini'
-    # #debug(configname = configname)
 
     def __init__(self):
         super(configset, self)
@@ -276,6 +275,8 @@ class debugger(object):
                     s.sendto(bytes(msg.encode('utf-8')), (host, port))
                 except UnicodeDecodeError:
                     pass
+                except OSError:
+                    pass
                 except:
                     #if os.getenv('DEBUG') == '1':
                     traceback.format_exc()
@@ -419,6 +420,7 @@ class debugger(object):
                     formatlist += " start... " + arrow
                 except:
                     formatlist += " start... " + ' -> '
+
         formatlist = formatlist[:-4]
         defname_parent = ''
         defname_parent1 = ''
@@ -632,6 +634,7 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 else:
                     os.system('clear')
             else:
+                showme()
                 print(str(msg))
             if sys.platform == 'win32':
                 print("=" * (MAX_WIDTH - 3))
@@ -656,6 +659,8 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     return msg
 
 def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer_column = 9000, buffer_row = 77, on_top = True):
+    if not sys.platform == 'win32':
+        return False
     from dcmd import dcmd
     setting = dcmd.dcmd()
     setting.setBuffer(buffer_row, buffer_column)
@@ -664,7 +669,55 @@ def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer
     if on_top:
         setting.setAlwaysOnTop(width, height, screensize[0] - width, y, center)
 
+def showme():
+    if not sys.platform == 'win32':
+        return False
+    global HANDLE
+    # import ctypes
+    # import win32gui, win32con
+    # import ctypes
+    # kernel32 = ctypes.WinDLL('kernel32')
+    # handle = kernel32.GetStdHandle(-11)
+    # handle1 = win32gui.GetForegroundWindow()
+    # handle2 = ctypes.windll.user32.GetForegroundWindow()
+    # print("HANDLE 0:", handle)
+    # print("HANDLE 1:", handle1)
+    # print("HANDLE 2:", handle2)
+    #win32gui.MessageBox(None, str(HANDLE), str(HANDLE), 0)
+    # handle = HANDLE
+    # if not handle:
+    #     handle = win32gui.GetForegroundWindow()
+    # handle = win32gui.GetForegroundWindow()
+    #handle1 = handle = win32gui.GetForegroundWindow()
+    # print("HANDLE:", HANDLE)
+    if HANDLE:
+        # win32gui.ShowWindow(HANDLE, win32con.SW_RESTORE)
+        # win32gui.SetForegroundWindow(HANDLE)
+        # win32gui.BringWindowToTop(HANDLE)
+        ctypes.windll.user32.SetForegroundWindow(HANDLE)
+    
+    #win32gui.SetWindowPos(handle, win32con.HWND_TOPMOST, 0, 0, 0, 0, 0)
+    
+    #win32gui.SetForegroundWindow(handle)
+
+    #win32gui.ShowWindow(handle1,9)
+    #win32gui.SetForegroundWindow(handle1)
+    #win32gui.SetWindowPos(handle, win32con.HWND_TOPMOST, None, None, None, None, 0)
+
+
 def usage():
+    if not __name__ == '__main__':
+        global HANDLE
+        # import win32gui, win32con
+        if sys.platform == 'win32':
+            kernel32 = ctypes.WinDLL('kernel32')
+            # handle = kernel32.GetStdHandle(-11)
+            # handle1 = win32gui.GetForegroundWindow()
+            handle2 = ctypes.windll.user32.GetForegroundWindow()
+            HANDLE = handle2
+    # print("HANDLE 3:", handle)
+    # print("HANDLE 4:", handle1)
+    # print("HANDLE 5:", handle2)
     import argparse
     parser = argparse.ArgumentParser(description= 'run debugger as server receive debug text default port is 50001', version= "1.0", formatter_class= argparse.RawTextHelpFormatter)
     parser.add_argument('-b', '--host', action = 'store', help = 'Bind / listen ip address, default all network device: 0.0.0.0', default = '0.0.0.0', type = str)
@@ -687,5 +740,11 @@ def usage():
             sys.exit()
 
 if __name__ == '__main__':
+    if sys.platform == 'win32':
+        kernel32 = ctypes.WinDLL('kernel32')
+        handle2 = ctypes.windll.user32.GetForegroundWindow()
+        HANDLE = handle2
     print("PID:", PID)
+    if sys.platform == 'win32':
+        print("HANDLE:", HANDLE)
     usage()
