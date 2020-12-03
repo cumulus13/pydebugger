@@ -13,6 +13,7 @@ from make_colors import make_colors
 import configparser
 import re
 import traceback
+import ctypes
 if not sys.platform == 'win32':
     import ctypes
 PID = os.getpid()
