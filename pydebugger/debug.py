@@ -214,7 +214,6 @@ class configset(object):
             data = configset.cfg.get(section, option)
         return data
 
-
 class debugger(object):
 
     global VERSION
@@ -705,6 +704,59 @@ def showme():
     #win32gui.SetForegroundWindow(handle1)
     #win32gui.SetWindowPos(handle, win32con.HWND_TOPMOST, None, None, None, None, 0)
 
+def cleanup(filename):
+    import shutil
+    from datetime import datetime
+    
+    file_dir = os.path.dirname(filename)
+    file_name = os.path.basename(filename)
+    file_ext = os.path.splitext(file_name)
+    ext = ''
+    if len(file_ext) == 2:
+        ext = file_ext[1]
+
+    shutil.copyfile(filename, os.path.join(file_dir, file_ext[0] + "_" + datetime.strftime(datetime.now(), '%Y%m%d_%H%M%S%f') + ext))
+
+    data = ''
+    fileout = ''
+    fileout1 = ''
+    if sys.version_info.major == 2:
+        with open(filename, 'rb') as f:
+            data = f.readlines()
+    else:
+        with open(filename, 'r') as f:
+            data = f.readlines()
+    datax = ""
+    for i in data:
+        if not re.findall('debug\(.*?\).*?\n', i):
+            datax += i
+    
+    if len(file_ext) == 2:
+        file_ext = file_ext[1]
+    else:
+        file_ext = ""
+    if not "_debug" in file_name:
+        fileout = os.path.join(file_dir, os.path.splitext(file_name)[0] + "_release" + ext)
+        fileout1 = filename.replace("_debug", "")
+    else:
+        fileout = filename.replace("_debug", "")
+    print("FILENAME:", filename)
+    print("FILEOUT :", fileout)
+
+    if sys.version_info.major == 2:
+        with open(fileout, 'wb') as f:
+            data = f.write(datax)
+        if fileout1:
+            with open(fileout1, 'wb') as f:
+                data = f.write(datax)
+    else:
+        with open(fileout, 'w') as f:
+            data = f.write(datax)
+        if fileout1:
+            with open(fileout, 'w') as f:
+                data = f.write(datax)
+    if not "_debug" in file_name:
+        shutil.copyfile(filename, os.path.join(file_dir, os.path.splitext(file_name)[0] + "_debug" + ext))
 
 def usage():
     if not __name__ == '__main__':
@@ -720,11 +772,12 @@ def usage():
     # print("HANDLE 4:", handle1)
     # print("HANDLE 5:", handle2)
     import argparse
-    parser = argparse.ArgumentParser(description= 'run debugger as server receive debug text default port is 50001', version= "1.0", formatter_class= argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description= 'run debugger as server receive debug text default port is 50001', formatter_class= argparse.RawTextHelpFormatter)
     parser.add_argument('-b', '--host', action = 'store', help = 'Bind / listen ip address, default all network device: 0.0.0.0', default = '0.0.0.0', type = str)
     parser.add_argument('-p', '--port', action = 'store', help = 'Bind / listen port number, default is 50001', default = 50001, type = int)
     parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
-    parser.add_argument('-c', '--center', action = 'store_true', help = 'Centering window')
+    parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
+    parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
     if len(sys.argv) == 1:
         print("\n")
         parser.print_help()
@@ -734,11 +787,14 @@ def usage():
         except KeyboardInterrupt:
             sys.exit()
     else:
-        try:
-            args = parser.parse_args()
-            serve(args.host, args.port, args.on_top, args.center)
-        except KeyboardInterrupt:
-            sys.exit()
+        args = parser.parse_args()
+        if args.cleanup:
+            cleanup(args.cleanup)
+        else:
+            try:
+                serve(args.host, args.port, args.on_top, args.center)
+            except KeyboardInterrupt:
+                sys.exit()
 
 if __name__ == '__main__':
     if sys.platform == 'win32':
