@@ -1,7 +1,11 @@
 #-*- encoding: utf-8 -*-
 #encoding: utf-8
 from __future__ import print_function
-VERSION = "X.X"
+try:
+    from . import __version__
+    VERSION = __version__.version
+except:
+    VERSION = "X.X"
 import os
 import sys
 import inspect
@@ -76,7 +80,7 @@ if os.getenv('DEBUGGER_SERVER'):
         DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER').strip().split(";")
     else:
         DEBUGGER_SERVER = [os.getenv('DEBUGGER_SERVER')]
-# print("DEBUGGER_SERVER =", DEBUGGER_SERVER)
+
 FILENAME = ''
 if os.getenv('DEBUG_FILENAME'):
     FILENAME = os.getenv('DEBUG_FILENAME')
@@ -509,6 +513,14 @@ class debugger(object):
         
         return formatlist
 
+def set_debug_server(active = False):
+    DEBUG_SERVER = active
+    return DEBUG_SERVER
+
+def set_debug(active):
+    DEBUG = active
+    return DEBUG
+
 def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
     global CONFIG_NAME
     try:
@@ -652,6 +664,8 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite') + "] "
     #print("line_number =", line_number)
     #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
+    if DEBUG:
+        debug = DEBUG
     c = debugger(defname, debug)
     
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
