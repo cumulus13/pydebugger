@@ -24,6 +24,8 @@ PID = os.getpid()
 HANDLE = None
 MAX_WIDTH = cmdw.getWidth()
 
+NO_DETACH = False
+
 DEBUG = False
 if DEBUG == 1 or DEBUG == '1':
     DEBUG = True
@@ -332,7 +334,6 @@ class debugger(object):
         else:
             return make_colors(strings, fore, back, attrs)
 
-
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
         
         cls = False
@@ -393,9 +394,9 @@ class debugger(object):
                         formatlist += make_colors((str(i)), 'lw', 'bl') + arrow
                     else:
                         if sys.version_info.major == 2:
-                            formatlist += make_colors(str(i) + ": ", 'b', 'ly') + make_colors(unicode(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'b', 'ly') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow 
+                            formatlist += make_colors(str(i) + ": ", 'b', 'y') + make_colors(unicode(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'b', 'y') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow 
                         else:
-                            formatlist += make_colors((str(i) + ": "), 'b', 'ly') + make_colors(str(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'b', 'ly') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow
+                            formatlist += make_colors((str(i) + ": "), 'b', 'y') + make_colors(str(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'b', 'y') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow
                 except:
                     if os.getenv('DEBUG'):
                         traceback.format_exc()
@@ -480,7 +481,7 @@ class debugger(object):
             if filename == None:
                 filename = sys.argv[0]
             try:
-                formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'b', 'lc') + " " + make_colors(defname, 'lw', 'lr') + make_colors(arrow, 'lr') + defname_parent + formatlist + "[" + make_colors(defname + ":", 'lw', 'lr') + make_colors(str(filename) + "]", 'lg') + " " + line_number
+                formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'b', 'c') + " " + make_colors(defname, 'lw', 'lr') + make_colors(arrow, 'lr') + defname_parent + formatlist + "[" + make_colors(defname + ":", 'lw', 'lr') + make_colors(str(filename) + "]", 'lg') + " " + line_number
             except:
                 self.track()
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + defname_parent1 + formatlist + "[" + str(filename) + "] [" + str(inspect.stack()[1][2]) + "] "  + line_number
@@ -543,8 +544,8 @@ def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
             s.sendto(msg, (host, port))
             s.close()
 
-def debug_self(**kwargs):
-    return debug(**kwargs)
+#def debug_self(**kwargs):
+#    return debug(**kwargs)
 
 def get_config(section, option, configname = 'debug.ini', value = ''):
     global CONFIG_NAME
@@ -556,7 +557,7 @@ def get_config(section, option, configname = 'debug.ini', value = ''):
     else:
         configname = CONFIG_NAME
 
-    debug_self(configname = configname)    
+    #debug_self(configname = configname)    
     cfg.read(configname)
 
     try:
@@ -581,9 +582,12 @@ def get_config(section, option, configname = 'debug.ini', value = ''):
         data = cfg.get(section, option)
     return data    
 
-def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
+def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False, no_detach = False):
     if on_top:
         set_detach(center = center, on_top = on_top)
+    global NO_DETACH
+    if no_detach:
+        NO_DETACH = no_detach
     global DEBUGGER_SERVER
     import socket
     host1 = ''
@@ -646,7 +650,20 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 else:
                     os.system('clear')
             else:
-                showme()
+                if str(get_config('DETACH', 'active', value = '0')) == '0':
+                    NO_DETACH = True
+                elif str(get_config('DETACH', 'active', value = '0')) == '1':
+                    NO_DETACH = False
+                elif os.getenv('DETACH') == '1':
+                    NO_DETACH = False
+                elif os.getenv('DETACH') == '0':
+                    NO_DETACH = True
+                elif os.getenv('NO_DETACH') == '1':
+                    NO_DETACH = True
+                elif os.getenv('NO_DETACH') == '0':
+                    NO_DETACH = False
+                if not NO_DETACH:
+                    showme()
                 print(str(msg))
             if sys.platform == 'win32':
                 print("=" * (MAX_WIDTH - 3))
@@ -730,6 +747,10 @@ def cleanup(filename):
         ext = file_ext[1]
 
     shutil.copyfile(filename, os.path.join(file_dir, file_ext[0] + "_" + datetime.strftime(datetime.now(), '%Y%m%d_%H%M%S%f') + ext))
+    if os.path.isfile(os.path.join(file_dir, os.path.splitext(file_name)[0] + "_release" + ext)):
+        shutil.copyfile(os.path.join(file_dir, os.path.splitext(file_name)[0] + "_release" + ext), os.path.join(file_dir, file_ext[0] + "_" + datetime.strftime(datetime.now(), '%Y%m%d_%H%M%S%f') + "_release" + ext))
+    if os.path.isfile(os.path.join(file_dir, os.path.splitext(file_name)[0] + "_debug" + ext)):
+        shutil.copyfile(os.path.join(file_dir, os.path.splitext(file_name)[0] + "_debug" + ext), os.path.join(file_dir, file_ext[0] + "_" + datetime.strftime(datetime.now(), '%Y%m%d_%H%M%S%f') + "_debug" + ext))
 
     data = ''
     fileout = ''
@@ -742,7 +763,7 @@ def cleanup(filename):
             data = f.readlines()
     datax = ""
     for i in data:
-        if not re.findall('debug\(.*?\).*?\n', i):
+        if not re.findall('debug\(.*?\).*?\n', i) or not re.findall('pause\(.*?\).*?\n', i):
             datax += i
     
     if len(file_ext) == 2:
@@ -792,6 +813,7 @@ def usage():
     parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
     parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
     parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
+    parser.add_argument('-nd', '--no-detach', action = 'store_true', help = "Dont Detached !")
     if len(sys.argv) == 1:
         print("\n")
         parser.print_help()
@@ -802,11 +824,13 @@ def usage():
             sys.exit()
     else:
         args = parser.parse_args()
+        if args.no_detach:
+            NO_DETACH = True            
         if args.cleanup:
             cleanup(args.cleanup)
         else:
             try:
-                serve(args.host, args.port, args.on_top, args.center)
+                serve(args.host, args.port, args.on_top, args.center, args.no_detach)
             except KeyboardInterrupt:
                 sys.exit()
 
