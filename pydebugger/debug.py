@@ -752,6 +752,14 @@ def cleanup(filename):
     if os.path.isfile(os.path.join(file_dir, os.path.splitext(file_name)[0] + "_debug" + ext)):
         shutil.copyfile(os.path.join(file_dir, os.path.splitext(file_name)[0] + "_debug" + ext), os.path.join(file_dir, file_ext[0] + "_" + datetime.strftime(datetime.now(), '%Y%m%d_%H%M%S%f') + "_debug" + ext))
 
+    if not "_debug" in file_name:
+        fileout = os.path.join(file_dir, os.path.splitext(file_name)[0] + "_release" + ext)
+        fileout1 = filename.replace("_debug", "")
+    else:
+        fileout = filename.replace("_debug", "")
+    # print("FILENAME:", filename)
+    # print("FILEOUT :", fileout)
+
     data = ''
     fileout = ''
     fileout1 = ''
@@ -761,35 +769,62 @@ def cleanup(filename):
     else:
         with open(filename, 'r') as f:
             data = f.readlines()
+    if not "_debug" in file_name:
+        fileout = os.path.join(file_dir, os.path.splitext(file_name)[0] + "_release" + ext)
+        fileout1 = filename.replace("_debug", "")
+    else:
+        fileout = filename.replace("_debug", "")
     datax = ""
+    n = 1
+    m = 10
+    import time
     for i in data:
-        if not re.findall('debug\(.*?\).*?\n', i) or not re.findall('pause\(.*?\).*?\n', i):
+        if (not re.findall('debug\(.*?\).*?\n', i) and not re.findall('pause\(.*?\).*?\n', i)) or (re.findall('debug\(.*?\).*?\n', i) and not re.findall('pause\(.*?\).*?\n', i) and "def " in i):
             datax += i
-    
+            
+            b = "Writing {} ".format(os.path.basename(fileout)) + "." * n
+            b1 = "Writing {} ".format(os.path.basename(fileout)) + " " * 30
+
+            if n <= 30:
+                print (b, end="\r")
+                n += 1
+            elif n >= 30:
+                print (b1, end="\r")
+                n = 1
+            else:
+                print (" " * (41 + len(fileout)), end="\r")
+            # time.sleep(0.01)
+    print(" " * (41 + len(fileout)), end='\r')
+    print("\n")
+        
     if len(file_ext) == 2:
         file_ext = file_ext[1]
     else:
         file_ext = ""
+    
     if not "_debug" in file_name:
         fileout = os.path.join(file_dir, os.path.splitext(file_name)[0] + "_release" + ext)
         fileout1 = filename.replace("_debug", "")
     else:
         fileout = filename.replace("_debug", "")
     print("FILENAME:", filename)
-    print("FILEOUT :", fileout)
+    print("FILEOUT RELEASE :", os.path.abspath(fileout))
+    print("FILEOUT DEBUG   :", os.path.abspath(fileout1))
+    print("BEFORE          :", len(data), "lines")
+    print("AFTER           :", len(datax.split("\n")), "lines")
 
     if sys.version_info.major == 2:
-        with open(fileout, 'wb') as f:
+        with open(os.path.abspath(fileout), 'wb') as f:
             data = f.write(datax)
-        if fileout1:
-            with open(fileout1, 'wb') as f:
-                data = f.write(datax)
+        # if fileout1:
+        #     with open(os.path.abspath(fileout1), 'wb') as f:
+        #         data = f.write(datax)
     else:
-        with open(fileout, 'w') as f:
+        with open(os.path.abspath(fileout), 'w') as f:
             data = f.write(datax)
-        if fileout1:
-            with open(fileout, 'w') as f:
-                data = f.write(datax)
+        # if fileout1:
+        #     with open(os.path.abspath(fileout), 'w') as f:
+        #         data = f.write(datax)
     if not "_debug" in file_name:
         shutil.copyfile(filename, os.path.join(file_dir, os.path.splitext(file_name)[0] + "_debug" + ext))
 
