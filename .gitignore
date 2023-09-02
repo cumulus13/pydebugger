@@ -7,3 +7,6 @@
 .hg/
 *.hgignore
 *.hgtags
+build/
+dist/
+*.egg-info/
