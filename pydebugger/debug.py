@@ -954,7 +954,11 @@ class debugger(object):
     @classmethod
     def db_log(self):
         session = self.create_db()
-        last_id_first = session.query(DebugDB.id).order_by(DebugDB.id.desc()).first()[0]
+        last_id_first = None
+        try:
+            last_id_first = session.query(DebugDB.id).order_by(DebugDB.id.desc()).first()[0]
+        except:
+            pass
         if last_id_first:
             try:
                 while 1:
