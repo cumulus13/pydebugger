@@ -1158,6 +1158,17 @@ def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer
     screensize = setting.getScreenSize()
     setting.setSize(width, height, screensize[0] - width, y, center)
     if on_top: setting.setAlwaysOnTop(width, height, screensize[0] - width, y, center)
+    
+def version():
+    try:
+        try:
+            from . import __version__
+        except:
+            import __version__
+        return __version__.version
+    except:
+        #print(traceback.format_exc())
+        return "ERROR"
 
 def showme():
     if not sys.platform == 'win32':
@@ -1270,6 +1281,7 @@ def usage():
     parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
     parser.add_argument('-l', '--db-log', action = 'store_true', help = 'Get the print log from Database')
     parser.add_argument('-L', '--db-log-tag', action = 'store', help = 'Get the print log from Database with Tag')
+    parser.add_argument('-v', '--version', action = 'store_true', help = 'Get version number')
     if len(sys.argv) == 1:
         print("\n")
         parser.print_help()
@@ -1286,6 +1298,8 @@ def usage():
             debugger.db_log()
         elif args.db_log_tag:
             debugger.db_log(args.db_log_tag)
+        elif args.version:
+            print("VERSION:", version())
         else:
             try:
                 serve(args.host, args.port, args.on_top, args.center)
