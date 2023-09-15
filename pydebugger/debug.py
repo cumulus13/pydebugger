@@ -957,6 +957,8 @@ class debugger(object):
     def db_log(self, tag = None):
         session = self.create_db()
         last_id_first = None
+        if tag == None:
+            tag = ''
         tag = tag.strip()
         try:
             if tag:
