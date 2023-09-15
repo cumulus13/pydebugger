@@ -633,6 +633,8 @@ if os.getenv('DEBUG_FILENAME'): FILENAME = os.getenv('DEBUG_FILENAME')
 
 ConfigParser = configparser
 
+force = False
+
 class debugger(object):
 
     CONFIG_NAME = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'debug.ini')
@@ -776,6 +778,8 @@ class debugger(object):
     @classmethod
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
         
+        force = os.getenv('MAKE_COLORS_FORCE') or self.CONFIG.get_config('make_colors', 'force') == 1 or self.CONFIG.get_config('make_colors', 'force') == True
+        
         cls = False
         formatlist = ''
         if DEBUG_SERVER: debug_server = True
@@ -787,7 +791,7 @@ class debugger(object):
         debug = debug or self.DEBUG
         color_random_1 = ['lightgreen', 'lightyellow', 'lightwhite', 'lightcyan', 'lightmagenta']
         
-        arrow = make_colors(' -> ', 'lg')
+        arrow = make_colors(' -> ', 'lg', force = force)
             
         if print_function_parameters:
             for i in args:
@@ -796,7 +800,7 @@ class debugger(object):
                 else:
                     try:
                         if sys.platform == 'win32':
-                            formatlist = make_colors((str(i) + ": "), 'lw', 'bl') + make_colors(str(values[i]), color_random_1[int(args.index(i))]) + arrow
+                            formatlist = make_colors((str(i) + ": "), 'lw', 'bl', force = force) + make_colors(str(values[i]), color_random_1[int(args.index(i))], force = force) + arrow
                         else:
                             formatlist = termcolor.colored((str(i) + ": "), 'lw', 'bl') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
                     except:
@@ -826,12 +830,12 @@ class debugger(object):
                     cls = True                
                 try:
                     if kwargs.get(i) == '' or kwargs.get(i) == None:
-                        formatlist += make_colors((str(i)), 'lw', 'bl') + arrow
+                        formatlist += make_colors((str(i)), 'lw', 'bl', force = force) + arrow
                     else:
                         if sys.version_info.major == 2:
-                            formatlist += make_colors(str(i) + ": ", 'b', 'ly') + make_colors(unicode(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'b', 'ly') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow 
+                            formatlist += make_colors(str(i) + ": ", 'b', 'ly', force = force) + make_colors(unicode(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow 
                         else:
-                            formatlist += make_colors((str(i) + ": "), 'b', 'ly') + make_colors(str(kwargs.get(i)), 'lc') + arrow + make_colors("TYPE:", 'b', 'ly') + make_colors(str(type(kwargs.get(i))), 'b', 'lc') + arrow + make_colors("LEN:", 'lw', 'lm') + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta') + arrow
+                            formatlist += make_colors((str(i) + ": "), 'b', 'ly', force = force) + make_colors(str(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow
                 except:
                     if os.getenv('DEBUG'):
                         traceback.format_exc()
@@ -854,7 +858,7 @@ class debugger(object):
                                 print("Send traceback ERROR [290]")
         else:
             try:
-                formatlist += " " + make_colors("start ... ", random.choice(color_random_1)) + arrow
+                formatlist += " " + make_colors("start ... ", random.choice(color_random_1), force = force) + arrow
             except:
                 try:
                     formatlist += " start... " + arrow
@@ -878,7 +882,7 @@ class debugger(object):
             filename = make_colors(filename, 'lightgreen')
 
             try:
-                formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'lw') + " " + make_colors(defname + arrow, 'lw', 'lr') + formatlist + " " + "[" + str(filename) + "]" + " "  + make_colors("[", "cyan") + make_colors(str(linenumbers)[2:-2], 'lw', 'lc') + make_colors("]", "lc") + " " + make_colors("PID:", 'red', 'lg') + make_colors(str(PID), 'lw')
+                formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'lw', force = force) + " " + make_colors(defname + arrow, 'lw', 'lr', force = force) + formatlist + " " + "[" + str(filename) + "]" + " "  + make_colors("[", "cyan", force = force) + make_colors(str(linenumbers)[2:-2], 'lw', 'lc', force = force) + make_colors("]", "lc", force = force) + " " + make_colors("PID:", 'red', 'lg', force = force) + make_colors(str(PID), 'lw', force = force)
             except:
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " "  + "[" + str(linenumbers)[2:-2] + "]"
         else:
@@ -894,29 +898,29 @@ class debugger(object):
                     if isinstance(h[2], int):
                         if not h[3] == '<module>':
                             defname_parent1 += "[%s]" % (h[3]) + arrow
-                            defname_parent += "%s" % (make_colors(h[3], 'lc')) + "[%s]" % (make_colors(str(h[2]), 'lightwhite', 'lightred')) + arrow
+                            defname_parent += "%s" % (make_colors(h[3], 'lc', force = force)) + "[%s]" % (make_colors(str(h[2]), 'lightwhite', 'lightred', force = force)) + arrow
                 #defname_parent = inspect.stack()[1][3]
             if the_class and not the_class == "NoneType":
 
-                defname_parent += "(%s)" % (make_colors(the_class, 'lightwhite', 'blue')) + arrow
+                defname_parent += "(%s)" % (make_colors(the_class, 'lightwhite', 'blue', force = force)) + arrow
                 
                 defname_parent1 += "(%s)" % (the_class) + arrow
             
             if not linenumbers:
                 try:
                     #line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + " " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
-                    line_number = make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
+                    line_number = make_colors("PID:", 'red', 'lightgreen', force = force) + make_colors(str(PID), 'lightwhite', force = force)
                 except:
                     self.track()
                     line_number =  " [" + str(inspect.stack()[1][2]) + "] "
             else:
                 linenumbers = str(linenumbers).strip()
-                line_number = linenumbers + make_colors("PID:", 'r', 'lg') + make_colors(str(PID), 'lw')
-                linenumbers = " [" + make_colors(str(linenumbers)[1:], 'r', 'lw') + make_colors("PID:", 'r', 'lg') + make_colors(str(PID), 'lw')
+                line_number = linenumbers + make_colors("PID:", 'r', 'lg', force = force) + make_colors(str(PID), 'lw', force = force)
+                linenumbers = " [" + make_colors(str(linenumbers)[1:], 'r', 'lw', force = force) + make_colors("PID:", 'r', 'lg', force = force) + make_colors(str(PID), 'lw', force = force)
             if filename == None:
                 filename = sys.argv[0]
             try:
-                formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'b', 'lc') + " " + make_colors(defname, 'lw', 'lr') + make_colors(arrow, 'lr') + defname_parent + formatlist + "[" + make_colors(defname + ":", 'lw', 'lr') + make_colors(str(filename) + "]", 'lg') + " " + line_number
+                formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'b', 'lc', force = force) + " " + make_colors(defname, 'lw', 'lr', force = force) + make_colors(arrow, 'lr', force = force) + defname_parent + formatlist + "[" + make_colors(defname + ":", 'lw', 'lr', force = force) + make_colors(str(filename) + "]", 'lg', force = force) + " " + line_number
             except:
                 self.track()
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + defname_parent1 + formatlist + "[" + str(filename) + "] [" + str(inspect.stack()[1][2]) + "] "  + line_number
@@ -1115,7 +1119,7 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
         except socket.error:
             port = port + 1
 
-    print(make_colors("BIND: ", 'white', 'green') + make_colors(host, 'white', 'red', attrs= ['bold']) + ":" + make_colors(str(port), 'black', 'yellow', attrs= ['bold']))
+    print(make_colors("BIND: ", 'white', 'green', force = force) + make_colors(host, 'white', 'red', attrs= ['bold'], force = force) + ":" + make_colors(str(port), 'black', 'yellow', attrs= ['bold'], force = force))
     while 1:
         msg = s.recv(6556500)
         if msg:
@@ -1141,7 +1145,7 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     #print("inspect.stack() =", inspect.stack())
     #print("inspect.stack()[1][2] =", inspect.stack()[1][2])
     #print("inspect.stack()[1][2] =", type(inspect.stack()[1][2]))
-    line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite') + "] "
+    line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite', force = force) + "] "
     #print("line_number =", line_number)
     #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
     c = debugger(defname, debug)
