@@ -959,9 +959,9 @@ class debugger(object):
             last_id_first = session.query(DebugDB.id).order_by(DebugDB.id.desc()).first()[0]
         except:
             pass
-        if last_id_first:
-            try:
-                while 1:
+        try:
+            while 1:
+                if last_id_first:
                     data = session.query(DebugDB).order_by(DebugDB.id.desc()).first()
                     last_id = data.id
                     if not last_id == last_id_first:
@@ -987,10 +987,10 @@ class debugger(object):
                             message = i.message
                             if hasattr(message, 'decode'): message = message.decode('utf-8')
                             print(message)
-                        time.sleep(0.5)
-                        
-            except KeyboardInterrupt:
-                sys.exit(0)
+                time.sleep(0.5)
+                    
+        except KeyboardInterrupt:
+            sys.exit(0)
             
 def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
     if CONFIG.get_config('RECEIVER', 'HOST', CONFIG_NAME):
