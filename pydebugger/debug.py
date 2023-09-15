@@ -954,7 +954,7 @@ class debugger(object):
         return formatlist
 
     @classmethod
-    def db_log(self, tag = 'debug'):
+    def db_log(self, tag = None):
         session = self.create_db()
         last_id_first = None
         tag = tag.strip()
@@ -998,7 +998,7 @@ class debugger(object):
                         for i in data:
                             message = i.message
                             if hasattr(message, 'decode'): message = message.decode('utf-8')
-                            print(message)
+                            print(message + " " + make_colors(i.tag, 'm', 'lw'))
                 time.sleep(0.5)
                     
         except KeyboardInterrupt:
