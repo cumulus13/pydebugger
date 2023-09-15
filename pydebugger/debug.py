@@ -957,6 +957,7 @@ class debugger(object):
     def db_log(self, tag = 'debug'):
         session = self.create_db()
         last_id_first = None
+        tag = tag.strip()
         try:
             if tag:
                 last_id_first = session.query(DebugDB.id).filter(DebugDB.tag == tag).order_by(DebugDB.id.desc()).first()[0]
