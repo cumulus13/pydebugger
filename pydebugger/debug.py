@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import os
+import time
 import sys
 import inspect
 import random
@@ -950,6 +951,42 @@ class debugger(object):
         
         return formatlist
 
+    @classmethod
+    def db_log(self):
+        session = self.create_db()
+        last_id_first = session.query(DebugDB.id).order_by(DebugDB.id.desc()).first()[0]
+        try:
+            while 1:
+                data = session.query(DebugDB).order_by(DebugDB.id.desc()).first()
+                last_id = data.id
+                if not last_id == last_id_first:
+                    #data = ActivityLog.objects.filter(id__range=(last_id_first, last_id)).order_by('id')[:obj.count()]
+                    # Query the data using SQLAlchemy
+                    query = session.query(DebugDB).filter(DebugDB.id > last_id_first, DebugDB.id <= last_id).order_by(DebugDB.id)
+                    
+                    # Retrieve the count using SQLAlchemy's count method
+                    count = query.count()
+                    
+                    # Specify the limit for the number of results
+                    limit = count  # Retrieve all rows within the specified range
+                    
+                    # Apply the limit to the query
+                    query = query.limit(limit)
+                    
+                    # Execute the query to get the results
+                    data = query.all()
+                    
+                    data = query.all()
+                    last_id_first = last_id
+                    for i in data:
+                        message = i.message
+                        if hasattr(message, 'decode'): message = message.decode('utf-8')
+                        print(message)
+                    time.sleep(0.5)
+                    
+        except KeyboardInterrupt:
+            sys.exit(0)
+            
 def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
     if CONFIG.get_config('RECEIVER', 'HOST', CONFIG_NAME):
         RECEIVER_HOST = CONFIG.get_config('RECEIVER', 'HOST', CONFIG_NAME)
@@ -1214,6 +1251,7 @@ def usage():
     parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
     parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
     parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
+    parser.add_argument('-l', '--db-log', action = 'store_true', help = 'Get the print log from Database')
     if len(sys.argv) == 1:
         print("\n")
         parser.print_help()
@@ -1226,6 +1264,8 @@ def usage():
         args = parser.parse_args()
         if args.cleanup:
             cleanup(args.cleanup)
+        elif args.db_log:
+            debugger.db_log()
         else:
             try:
                 serve(args.host, args.port, args.on_top, args.center)
