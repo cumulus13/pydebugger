@@ -44,6 +44,7 @@ class DebugDB(Base):
     id = Column(Integer, primary_key=True,  autoincrement=True)
     created = Column(TIMESTAMP, server_default=func.now())
     message = Column(Text)
+    tag = Column(Text, server_default="debug")
 
 class MultiOrderedDict(OrderedDict):
     def __setitem__(self, key, value):
@@ -758,11 +759,12 @@ class debugger(object):
             return make_colors(strings, fore, back, attrs)
 
     @classmethod
-    def insert_db(self, message, username=None, password=None, hostname=None, dbname=None):
+    def insert_db(self, message, username=None, password=None, hostname=None, dbname=None, tag = 'debug'):
+        tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
         if USE_SQL:
             session = self.create_db()
             try:
-                new_data = DebugDB(message=message)
+                new_data = DebugDB(message=message, tag = tag)
                 session.add(new_data)
                 session.commit()
                 session.close()
@@ -952,22 +954,31 @@ class debugger(object):
         return formatlist
 
     @classmethod
-    def db_log(self):
+    def db_log(self, tag = 'debug'):
         session = self.create_db()
         last_id_first = None
         try:
-            last_id_first = session.query(DebugDB.id).order_by(DebugDB.id.desc()).first()[0]
+            if tag:
+                last_id_first = session.query(DebugDB.id).filter(DebugDB.tag == tag).order_by(DebugDB.id.desc()).first()[0]
+            else:
+                last_id_first = session.query(DebugDB.id).order_by(DebugDB.id.desc()).first()[0]
         except:
             pass
         try:
             while 1:
                 if last_id_first:
-                    data = session.query(DebugDB).order_by(DebugDB.id.desc()).first()
+                    if tag:
+                        data = session.query(DebugDB).filter(DebugDB.tag == tag).order_by(DebugDB.id.desc()).first()
+                    else:
+                        data = session.query(DebugDB).order_by(DebugDB.id.desc()).first()
                     last_id = data.id
                     if not last_id == last_id_first:
                         #data = ActivityLog.objects.filter(id__range=(last_id_first, last_id)).order_by('id')[:obj.count()]
                         # Query the data using SQLAlchemy
-                        query = session.query(DebugDB).filter(DebugDB.id > last_id_first, DebugDB.id <= last_id).order_by(DebugDB.id)
+                        if tag:
+                            query = session.query(DebugDB).filter(DebugDB.id > last_id_first, DebugDB.id <= last_id, DebugDB.tag == tag).order_by(DebugDB.id)
+                        else:
+                            query = session.query(DebugDB).filter(DebugDB.id > last_id_first, DebugDB.id <= last_id).order_by(DebugDB.id)
                         
                         # Retrieve the count using SQLAlchemy's count method
                         count = query.count()
@@ -1118,7 +1129,8 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
             else:
                 print("=" * ((MAX_WIDTH * 2) - 3))
 
-def debug(defname = None, debug = None, debug_server = False, line_number = '', print_function_parameters = False, **kwargs):
+def debug(defname = None, debug = None, debug_server = False, line_number = '', tag = 'debug', print_function_parameters = False, **kwargs):
+    tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
     
     #if not defname:
         #print "inspect.stack =", inspect.stack()[1][2]
@@ -1133,7 +1145,7 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
     
-    c.insert_db(msg)
+    c.insert_db(msg, tag)
     
     return msg
 
