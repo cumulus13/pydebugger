@@ -1,7 +1,7 @@
 #-*- encoding: utf-8 -*-
 #encoding: utf-8
 from __future__ import print_function
-VERSION = "X.X"
+
 import os
 import sys
 import inspect
@@ -10,244 +10,667 @@ import socket
 import cmdw
 import datetime
 from make_colors import make_colors
-import configparser
+try:
+    import configparser
+    ConfigParser = configparser
+except ImportError:
+    import ConfigParser
+    configparser = ConfigParser
+    
 import re
 import traceback
 import ctypes
-if not sys.platform == 'win32':
-    import ctypes
+if not sys.platform == 'win32': import ctypes
+from urllib.parse import quote_plus
+import socket
+from collections import OrderedDict
+import ast, json
+
+USE_SQL = False
+
+try:
+    from sqlalchemy import create_engine, Column, Integer, Text, text, func, TIMESTAMP #, String, Boolean, TIMESTAMP, BigInteger, Text
+    from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.orm import sessionmaker
+    USE_SQL = True
+    Base = declarative_base()
+except:
+    pass
+
+class DebugDB(Base):
+    __tablename__ = 'debug'
+
+    id = Column(Integer, primary_key=True,  autoincrement=True)
+    created = Column(TIMESTAMP, server_default=func.now())
+    message = Column(Text)
+
+class MultiOrderedDict(OrderedDict):
+    def __setitem__(self, key, value):
+        if isinstance(value, list) and key in self:
+            self[key].extend(value)
+        else:
+            super(OrderedDict, self).__setitem__(key, value)
+
+class configset(ConfigParser.RawConfigParser):
+    def __init__(self, configfile = ''):
+        ConfigParser.RawConfigParser.__init__(self)
+        self.allow_no_value = True
+        self.optionxform = str
+
+        #self.cfg = ConfigParser.RawConfigParser(allow_no_value=True)
+        self.path = None
+
+        configfile = configfile or os.path.splitext(os.path.realpath(sys.argv[0]))[0] + ".ini"
+        
+        self.configname = configfile + ".ini"
+
+        self.configname = configfile
+        self.configname_str = configfile
+
+        try:
+            if os.path.isfile(self.configname):
+                if os.getenv('SHOW_CONFIGNAME'):
+                    print("CONFIGNAME:", os.path.realpath(self.configname))
+        except:
+            pass
+
+        configpath = ''
+        configpath = inspect.stack()[1][3]
+
+        if os.path.isfile(configpath):
+            configpath = os.path.dirname(configpath)
+        else:
+            configpath = os.getcwd()
+
+        configpath = os.path.realpath(configpath)
+
+        if not self.path:
+            self.path = os.path.dirname(inspect.stack()[0][1])
+
+        if not os.path.isfile(self.configname):
+            f = open(self.configname, 'w')
+            f.close()
+        self.read(self.configname)
+        
+        if not os.path.isfile(self.configname):
+            print("CONFIGNAME:", os.path.abspath(self.configname), " NOT a FILE !!!")
+            sys.exit("Please Set configname before !!!")
+
+    def configfile(self, configfile):
+        self.configname = os.path.realpath(configfile)
+        return self.configname
+
+    def config_file(self, configfile):
+        return self.configfile(configfile)
+
+    def set_configfile(self, configfile):
+        return self.configfile(configfile)
+
+    def set_config_file(self, configfile):
+        return self.set_configfile(configfile)
+
+    def filename(self):
+        return os.path.realpath(self.configname)
+
+    def get_configfile(self):
+        return os.path.realpath(self.configname)
+
+    def get_config_file(self):
+        return os.path.realpath(self.configname)
+
+    def write_config(self, section, option, value='', configfile = None):
+        self.configname = configfile or self.configname
+        if os.path.isfile(self.configname):
+            self.read(self.configname)
+        else:
+            print("Not a file:", self.configname)
+            sys.exit("Not a file: " + self.configname)
+
+        value = value or ''
+
+        try:
+            self.set(section, option, value)
+        except ConfigParser.NoSectionError:
+            self.add_section(section)
+            self.set(section, option, value)
+        except ConfigParser.NoOptionError:
+            self.set(section, option, value)
+
+        if sys.version_info.major == '2':
+            cfg_data = open(self.configname,'wb')
+        else:
+            cfg_data = open(self.configname,'w')
+
+        try:
+            self.write(cfg_data)
+        except:
+            print(traceback.format_exc())
+            #import io
+            #io_data = io.BytesIO(cfg_data.read().encode('utf-8'))
+            #self.write(io_data)
+        cfg_data.close()
+
+        return self.read_config(section, option)
+
+    def write_config2(self, section, option, value='', configfile=''):
+        self.configname = configfile or self.configname
+        
+        if os.path.isfile(self.configname):
+            self.read(self.configname)
+        else:
+            print("Not a file:", self.configname)
+            sys.exit("Not a file: " + self.configname)
+
+        if not value == None:
+
+            try:
+                self.get(section, option)
+                self.set(section, option, value)
+            except ConfigParser.NoSectionError:
+                return "\tNo Section Name: '%s'" %(section)
+            except ConfigParser.NoOptionError:
+                return "\tNo Option Name: '%s'" %(option)
+            
+            if sys.version_info.major == '2':
+                cfg_data = open(self.configname,'wb')
+            else:
+                cfg_data = open(self.configname,'w')
+
+            self.write(cfg_data)
+            cfg_data.close()
+            return self.read_config(section, option)
+        else:
+            return None
+
+    def read_config(self, section, option, value = None):
+        """
+            option: section, option, value=None
+        """
+        
+        self.read(self.configname)
+        
+        try:
+            data = self.get(section, option)
+
+            if value and not data:
+                self.write_config(section, option, value)
+        except:
+            try:
+                self.write_config(section, option, value)
+            except:
+                print ("error:", traceback.format_exc())
+
+        return self.get(section, option)
+
+    def read_config2(self, section, option, value = None, configfile=''): #format ['aaa','bbb','ccc','ddd']
+        """
+            option: section, option, filename=''
+            format output: ['aaa','bbb','ccc','ddd']
+
+        """
+
+        return self.get_config_as_list(section, option, value)
+
+    def read_config_as_list(self, section, option, value = None, configfile=''): #format ['aaa','bbb','ccc','ddd']
+        return self.get_config_as_list(section, option, value)
+
+    def read_config3(self, section, option, value = None, filename=''): #format result: [[aaa.bbb.ccc.ddd, eee.fff.ggg.hhh], qqq.xxx.yyy.zzz]
+        """
+            option: section, option, filename=''
+            format output first: [[aaa.bbb.ccc.ddd, eee.fff.ggg.hhh], qqq.xxx.yyy.zzz]
+            note: if not separated by comma then second output is normal
+
+        """
+
+        self.dict_type = MultiOrderedDict
+        if filename:
+            if os.path.isfile(filename):
+                self.read(filename)
+        else:
+            self.read(self.configname)
+
+        data = []
+        cfg = self.get(section, option)
+
+        for i in cfg:
+            if "," in i:
+                d1 = str(i).split(",")
+                d2 = []
+                for j in d1:
+                    d2.append(str(j).strip())
+                data.append(d2)
+            else:
+                data.append(i)
+        self.dict_type = None
+        self.read(self.configname)
+        return data
+
+    def read_config4(self, section, option, value = '', filename='', verbosity=None): #format result: [aaa.bbb.ccc.ddd, eee.fff.ggg.hhh, qqq.xxx.yyy.zzz]
+        """
+            option: section, option, filename=''
+            format result: [aaa.bbb.ccc.ddd, eee.fff.ggg.hhh, qqq.xxx.yyy.zzz]
+            note: all output would be array/tuple
+
+        """
+        self.dict_type = MultiOrderedDict
+        if filename:
+            if os.path.isfile(filename):
+                self.read(filename)
+        else:
+            self.read(self.configname)
+        data = []
+        try:
+            cfg = self.get(section, option)
+            if not cfg == None:
+                for i in cfg:
+                    if "," in i:
+                        d1 = str(i).split(",")
+                        for j in d1:
+                            data.append(str(j).strip())
+                    else:
+                        data.append(i)
+                self.dict_type = None
+                self.read(self.configname)
+                return data
+            else:
+                self.dict_type = None
+                self.read(self.configname)
+                return None
+        except:
+            data = self.write_config(section, option, filename, value)
+            self.dict_type = None
+            self.read(self.configname)
+            return data
+
+    def read_config5(self, section, option, filename='', verbosity=None): #format result: {aaa:bbb, ccc:ddd, eee:fff, ggg:hhh, qqq:xxx, yyy:zzz}
+        """
+            option: section, option, filename=''
+            input separate is ":" and commas example: aaa:bbb, ccc:ddd
+            format result: {aaa:bbb, ccc:ddd, eee:fff, ggg:hhh, qqq:xxx, yyy:zzz}
+
+        """
+        self.dict_type = MultiOrderedDict
+        if filename:
+            if os.path.isfile(filename):
+                self.read(filename)
+        else:
+            self.read(self.configname)
+        data = {}
+
+        cfg = self.get(section, option)
+        for i in cfg:
+            if "," in i:
+                d1 = str(i).split(",")
+                for j in d1:
+                    d2 = str(j).split(":")
+                    data.update({str(d2[0]).strip():int(str(d2[1]).strip())})
+            else:
+                for x in i:
+                    e1 = str(x).split(":")
+                    data.update({str(e1[0]).strip():int(str(e1[1]).strip())})
+        self.dict_type = None
+        self.read(self.configname)
+        return data
+
+    def read_config6(self, section, option, filename='', verbosity=None): #format result: {aaa:[bbb, ccc], ddd:[eee, fff], ggg:[hhh, qqq], xxx:[yyy:zzz]}
+        """
+
+            option: section, option, filename=''
+            format result: {aaa:bbb, ccc:ddd, eee:fff, ggg:hhh, qqq:xxx, yyy:zzz}
+
+        """
+        self.dict_type = MultiOrderedDict
+        if filename:
+            if os.path.isfile(filename):
+                self.read(filename)
+        else:
+            self.read(self.configname)
+        data = {}
+
+        cfg = self.get(section, option)
+        for i in cfg:
+            if ":" in i:
+                d1 = str(i).split(":")
+                d2 = int(str(d1[0]).strip())
+                for j in d1[1]:
+                    d3 = re.split("['|','|']", d1[1])
+                    d4 = str(d3[1]).strip()
+                    d5 = str(d3[-2]).strip()
+                    data.update({d2:[d4, d5]})
+            else:
+                pass
+        self.dict_type = None
+        self.read(self.configname)
+        return data
+
+    def get_config(self, section, option, value=None):
+        data = None
+        if value and not isinstance(value, str):
+            value = str(value)
+
+        if not value or value == 'None':
+            value = ''
+        self.read(self.configname)
+        try:
+            data = self.read_config(section, option, value)
+        except ConfigParser.NoSectionError:
+            if os.getenv('DEBUG'):
+                print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config(section, option, value)
+        except ConfigParser.NoOptionError:
+            if os.getenv('DEBUG'):
+                print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config(section, option, value)
+        except:
+            if os.getenv('DEBUG'):
+                print (traceback.format_exc())
+        #self.read(self.configname)
+        if data == 'False' or data == 'false':
+            return False
+        elif data == 'True' or data == 'true':
+            return True
+        elif str(data).isdigit():
+            return int(data)
+        else:
+            return data
+
+    def get_config_as_list(self, section, option, value=None):
+        '''
+            value (str): string comma delimiter or string tuple/list : data1, data2, datax or [data1, data2, datax] or (data1, data2, datax)
+        '''
+        if value and not isinstance(value, str):
+            value = str(value)
+
+        if not value:
+            value = ''
+        self.read(self.configname)
+        try:
+            data = self.read_config(section, option, value)
+        except ConfigParser.NoSectionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config(section, option, value)
+        except ConfigParser.NoOptionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config(section, option, value)
+        except:
+            print (traceback.format_exc())
+        data = re.split("\n|, |,| ", data)
+        data = list(filter(None, data))
+        data_list = []
+        dlist = []
+        
+        for i in data:
+            
+            if "[" in str(i) and "]" in str(i):
+                dl = re.findall("\[.*?\]", i)
+                
+                if dl:
+                    for x in dl:
+                        
+                        
+                        try:
+                            dlist.append(ast.literal_eval(re.sub("\[|\]", "", x)))
+                        except:
+                            try:
+                                dlist.append(json.loads(x))
+                            except Exception as e:
+                                print("ERROR:", e, "list string must be containt ' or \" example: ['data1', 'data2'] ")
+                                return False
+                        
+                        # data = re.sub(x, "", data)
+                        data.remove(x)
+                        
+                        
+            else:
+                if "'" in i or '"' in i:
+                    
+                    x = re.sub("'|\"", "", i)
+                    
+                    dlist.append(x)
+                    data.remove(i)
+        
+        for i in data:
+            if i.strip() == 'False' or i.strip() == 'false':
+                data_list.append(False)
+            elif i.strip() == 'True' or i.strip() == 'true':
+                data_list.append(True)
+            elif str(i).strip().isdigit():
+                data_list.append(int(i.strip()))
+            else:
+                  data_list.append(i.strip())
+        return dlist + data_list
+
+    def get_config2(self, section, option, value = '', filename='', verbosity=None):
+        if os.path.isfile(filename):
+            self.read(filename)
+        else:
+            filename = self.configname
+            self.read(self.configname)
+        try:
+            data = self.read_config2(section, option, filename)
+        except ConfigParser.NoSectionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config2(section, option, filename)
+        except ConfigParser.NoOptionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config2(section, option, filename)
+        return data
+
+    def get_config3(self, section, option, value = '', filename='', verbosity=None):
+        if os.path.isfile(filename):
+            self.read(filename)
+        else:
+            filename = self.configname
+            self.read(self.configname)
+        try:
+            data = self.read_config3(section, option, filename)
+        except ConfigParser.NoSectionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config3(section, option, filename)
+        except ConfigParser.NoOptionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config3(section, option, filename)
+        return data
+
+    def get_config4(self, section, option, value = '', filename='', verbosity=None):
+        if os.path.isfile(filename):
+            self.read(filename)
+        else:
+            filename = self.configname
+            self.read(self.configname)
+        try:
+            data = self.read_config4(section, option, filename)
+        except ConfigParser.NoSectionError:
+            #print "Error 1 =", traceback.format_exc()
+            self.write_config(section, option, value)
+            data = self.read_config4(section, option, filename)
+            #print "data 1 =", data
+        except ConfigParser.NoOptionError:
+            #print "Error 2 =", traceback.format_exc()
+            self.write_config(section, option, value)
+            data = self.read_config4(section, option, filename)
+            #print "data 2 =", data
+        #print "DATA =", data
+        return data
+
+    def get_config5(self, section, option, value = '', filename='', verbosity=None):
+        if os.path.isfile(filename):
+            self.read(filename)
+        else:
+            filename = self.configname
+            self.read(self.configname)
+        try:
+            data = self.read_config5(section, option, filename)
+        except ConfigParser.NoSectionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config5(section, option, filename)
+        except ConfigParser.NoOptionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config5(section, option, filename)
+        return data
+
+    def get_config6(self, section, option, value = '', filename='', verbosity=None):
+        if os.path.isfile(filename):
+            self.read(filename)
+        else:
+            filename = self.configname
+            self.read(self.configname)
+        try:
+            data = self.read_config6(section, option, filename)
+        except ConfigParser.NoSectionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config6(section, option, filename)
+        except ConfigParser.NoOptionError:
+            print (traceback.format_exc())
+            self.write_config(section, option, value)
+            data = self.read_config6(section, option, filename)
+        return data
+
+    def write_all_config(self, filename='', verbosity=None):
+        if os.path.isfile(filename):
+            self.read(filename)
+        else:
+            filename = self.configname
+            self.read(self.configname)
+
+    def read_all_config(self, section=[]):
+        print("CONFIGFILE:", self.configname)
+        self.read(self.configname)
+        dbank = []
+        if section:
+            for i in section:
+                print("[" + i + "]")
+                options = self.options(i)
+                data = {}
+                for o in options:
+                    d = self.get(i, o)
+                    print("   " + o + "=" + d)
+                    data.update({o: d})
+                dbank.append([i, data])
+        else:
+            for i in self.sections():
+                #section.append(i)
+                print("[" + i + "]")
+                data = {}
+                for x in self.options(i):
+                    d = self.get(i, x)
+                    print("   " + x + "=" + d)
+                    data.update({x:d})
+                dbank.append([i,data])
+        print("\n")
+        return dbank
+
+    def read_all_section(self, filename='', section='server'):
+        if os.path.isfile(filename):
+            self.read(filename)
+        else:
+            filename = self.configname
+            self.read(self.configname)
+
+        dbank = []
+        dhost = []
+        for x in self.options(section):
+            d = self.get(section, x)
+            #data.update({x:d})
+            dbank.append(d)
+            if d:
+                if ":" in d:
+                    data = str(d).split(":")
+                    host = str(data[0]).strip()
+                    port = int(str(data[1]).strip())
+                    dhost.append([host,  port])
+
+        return [dhost,  dbank]
+
+    
 PID = os.getpid()
 HANDLE = None
 MAX_WIDTH = cmdw.getWidth()
-
-DEBUG = False
-if DEBUG == 1 or DEBUG == '1':
-    DEBUG = True
-elif DEBUG == 0 or DEBUG == '0':
-    DEBUG = False
-
-if os.getenv('DEBUG') == 1 or os.getenv('DEBUG') == '1':
-    DEBUG = True
-if os.getenv('DEBUG') == 0 or os.getenv('DEBUG') == '0':
-    DEBUG = False
-
-if isinstance(DEBUG, str):
-    DEBUG = bool(DEBUG.title())
-
-DEBUG_SERVER = os.getenv('DEBUG_SERVER')
-if DEBUG_SERVER == 1 or DEBUG_SERVER == '1':
-    DEBUG_SERVER = True
-if DEBUG_SERVER == 0 or DEBUG_SERVER == '0':
-    DEBUG_SERVER = False
-if DEBUG_SERVER == "True" or DEBUG_SERVER == True:
-    DEBUG_SERVER = True
-
-DEBUGGER_SERVER = ['127.0.0.1:50001']
-CONFIG_NAME = os.path.join(os.path.dirname(__file__), 'debug.ini')
+CONFIG_NAME = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'debug.ini')
+CONFIG = configset(CONFIG_NAME)
 PATH = ''
-
 if PATH: CONFIG_NAME = os.path.join(PATH, os.path.basename(CONFIG_NAME))
 
-try:
-    cfg = configparser.RawConfigParser(allow_no_value=True)
-    cfg.optionxform = str
-    cfg.read(CONFIG_NAME)
-    try:
-        cfg = cfg.get('DEBUGGER', 'HOST')
-    except:
-        try:
-            cfg.set('DEBUGGER', 'HOST', '0.0.0.0')
-        except configparser.NoSectionError:
-            cfg.add_section('DEBUGGER')
-            cfg.set('DEBUGGER', 'HOST', '0.0.0.0')
-        cfg_data = open(CONFIG_NAME, 'w')
-        cfg.write(cfg_data)
-        cfg_data.close()
-        cfg = cfg.get('DEBUGGER', 'HOST')
-    if ";" in cfg:
-        DEBUGGER_SERVER = re.split(";", cfg)
-    else:
-        DEBUGGER_SERVER = [cfg]
-except:
-    traceback.format_exc()
+DEBUG = False
+if DEBUG == 1 or DEBUG == '1': DEBUG = True
+elif DEBUG == 0 or DEBUG == '0': DEBUG = False
 
+if os.getenv('DEBUG') == 1 or os.getenv('DEBUG') == '1': DEBUG = True
+if os.getenv('DEBUG') == 0 or os.getenv('DEBUG') == '0': DEBUG = False
+
+if isinstance(DEBUG, str):
+    if not DEBUG.isdigit():
+        DEBUG = bool(DEBUG.title())
+
+DEBUG_SERVER = os.getenv('DEBUG_SERVER')
+if DEBUG_SERVER == 1 or DEBUG_SERVER == '1': DEBUG_SERVER = True
+if DEBUG_SERVER == 0 or DEBUG_SERVER == '0': DEBUG_SERVER = False
+if DEBUG_SERVER == "True": DEBUG_SERVER = True
+if DEBUG_SERVER == "False": DEBUG_SERVER = False
+
+DEBUGGER_SERVER = ['127.0.0.1:50001']
 if os.getenv('DEBUGGER_SERVER'):
     if ";" in os.getenv('DEBUGGER_SERVER'):
         DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER').strip().split(";")
     else:
         DEBUGGER_SERVER = [os.getenv('DEBUGGER_SERVER')]
-# print("DEBUGGER_SERVER =", DEBUGGER_SERVER)
+
 FILENAME = ''
-if os.getenv('DEBUG_FILENAME'):
-    FILENAME = os.getenv('DEBUG_FILENAME')
+if os.getenv('DEBUG_FILENAME'): FILENAME = os.getenv('DEBUG_FILENAME')
 
-class configset(object):
-    cfg = configparser.RawConfigParser(allow_no_value=True)
-    cfg.optionxform = str
-    THIS_PATH = os.path.dirname(__file__)
-
-    def __init__(self):
-        super(configset, self)
-        global CONFIG_NAME
-        global PATH
-        self.cfg = configparser.RawConfigParser(allow_no_value=True)
-        self.cfg.optionxform = str        
-        self.configname = CONFIG_NAME
-        if self.configname:
-            configname = self.configname
-
-        self.path = None
-        if not self.path:
-            self.path = os.path.dirname(inspect.stack()[0][1])
-        if PATH:
-            self.path = PATH
-        # debug(self_path = self.path)
-
-        configname = os.path.join(self.path, os.path.basename(configname))
-        # debug(configname=configname)
-
-    def get_config_file(self, filename='', verbosity=None):
-        if not filename:
-            filename = self.configname
-        configname = filename
-        self.configname = configname
-        #debug(configname = filename)
-        self.configname = configname
-        #debug(configset_configname = self.configname)
-        self.path = None
-        if self.path:
-            if os.getenv('DEBUG'):
-                print ("001")
-            if configname:
-                self.configname = os.path.join(os.path.abspath(self.path), os.path.basename(self.configname))
-
-        if os.path.isfile(os.path.join(os.getcwd(), filename)):
-            if os.getenv('DEBUG'):
-                print ("002")
-            #debug(checking_001 = "os.path.isfile(os.path.join(os.getcwd(), filename))")
-            self.configname = os.path.join(os.getcwd(), filename)
-            #debug(configname = os.path.join(os.getcwd(), filename))
-            return os.path.join(os.getcwd(), filename)
-        elif os.path.isfile(filename):
-            if os.getenv('DEBUG'):
-                print ("003")
-            #debug(checking_002 = "os.path.isfile(filename)")
-            self.configname =filename
-            #debug(configname = os.path.abspath(filename))
-            return filename
-        elif os.path.isfile(os.path.join(os.path.dirname(__file__), filename)):
-            if os.getenv('DEBUG'):
-                print ("004")
-            #debug(checking_003 = "os.path.isfile(os.path.join(os.path.dirname(__file__), filename))")
-            self.configname =os.path.join(os.path.dirname(__file__), filename)
-            #debug(configname = os.path.join(os.path.dirname(__file__), filename))
-            return os.path.join(os.path.dirname(__file__), filename)
-        elif os.path.isfile(self.configname):
-            if os.getenv('DEBUG'):
-                print ("005")
-            #debug(checking_004 = "os.path.isfile(configname)")
-            #debug(configname = os.path.abspath(configname))
-            return configname
-        else:
-            if os.getenv('DEBUG'):
-                print ("006")
-            #debug(checking_006 = "ELSE")
-            fcfg = self.configname
-            f = open(fcfg, 'w')
-            f.close()
-            filecfg = fcfg
-            #debug(CREATE = os.path.abspath(filecfg))
-            return filecfg
-
-    def write_config(self, section, option, filename='', value=None, cfg = None, verbosity=None):
-        #print ("SECTION:", section)
-        #print ("OPTION :", option)
-        if not os.path.isfile(self.configname):
-            filename = self.get_config_file(filename, verbosity)
-        else:
-            filename = self.configname
-        if not cfg:
-            cfg = configset.cfg
-        if cfg:
-            cfg.read(filename)
-        else:
-            cfg = configparser.RawConfigParser(allow_no_value=True)
-            cfg.optionxform = str
-            cfg.read(filename)
-        try:
-            cfg.set(section, option, value)
-        except configparser.NoSectionError:
-            cfg.add_section(section)
-            cfg.set(section, option, value)
-        except configparser.NoOptionError:
-            cfg.set(section, option, value)
-
-        if os.path.isfile(filename):
-            cfg_data = open(filename,'w+')
-        else:
-            cfg_data = open(filename,'wb')
-
-        cfg.write(cfg_data) 
-        cfg_data.close()  
-
-        return self.read_config(section, option, filename)
-
-    def read_config(self, section, option, filename='', value=None, verbosity=None):
-        """
-            option: section, option, filename='', value=None
-        """
-        if not os.path.isfile(self.configname):
-            filename = self.get_config_file(filename, verbosity)
-        else:
-            filename = self.configname
-
-        self.cfg.read(filename)
-        try:
-            data = self.cfg.get(section, option)
-        except:
-            #if os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
-            #    traceback.format_exc()
-            #else:
-                #traceback.format_exc(print_msg= False)
-            pass
-            self.write_config(section, option, filename, value)
-            data = configset.cfg.get(section, option)
-        return data
+ConfigParser = configparser
 
 class debugger(object):
 
-    global VERSION
-    global CONFIG_NAME
-
+    CONFIG_NAME = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'debug.ini')
     VERSION = "x.x"
-
+    DEBUG = DEBUG
+    CONFIG = configset(CONFIG_NAME)
+    FILENAME = FILENAME
+    
     def __init__(self, defname = None, debug = None, filename = None, **kwargs):
         super(debugger, self)
-        self.DEBUG = debug
-        self.FILENAME = filename
-        self.platform = sys.platform
-        if DEBUG:
-            self.DEBUG = DEBUG
-        if FILENAME:
-            self.FILENAME = FILENAME
-        #print "self.FILENAME =", self.FILENAME
-        if os.getenv('DEBUG') and os.getenv('DEBUG') == 1 or os.getenv('DEBUG') and os.getenv('DEBUG') == '1' or os.getenv('DEBUG') and os.getenv('DEBUG') == True or os.getenv('DEBUG') and os.getenv('DEBUG') == "True":
-            self.DEBUG = True
-        #import configset
-        self.CONFIG = configset()
-        self.CONFIG.configname = CONFIG_NAME
-        #print ("CONFIG_NAME =", CONFIG_NAME)
-        #self.CONFIG = configparser.RawConfigParser(allow_no_value=True)
-        #self.CONFIG.opionxform = str
-        #self.CONFIG.read(CONFIG_NAME)
-        self.read_config = self.CONFIG.read_config
-        self.get_config_file = self.CONFIG.get_config_file
+        self.DEBUG = debug or self.DEBUG
+        self.FILENAME = filename or FILENAME
+    
+    @classmethod    
+    def create_db(self, username = None, password = None, hostname = None, dbname = None, dbtype = None):
+        if USE_SQL:
+            username = username or self.CONFIG.get_config('postgres', 'username') or 'debug_admin'
+            password = password or self.CONFIG.get_config('postgres', 'password') or 'Xxxnuxer13'
+            hostname = hostname or self.CONFIG.get_config('postgres', 'hostname') or '127.0.0.1'
+            dbname = dbname or self.CONFIG.get_config('postgres', 'dbname') or 'pydebugger'
+            dbtype = dbtype or self.CONFIG.get_config('database', 'dbtype') or 'postgresql'
+            
+            password_encoded = quote_plus(password)
+            
+            engine_config = f'{dbtype}://{username}:{password_encoded}@{hostname}/{dbname}'
+            engine = create_engine(engine_config, echo=self.CONFIG.get_config('logging', 'verbose', 'False'))
+            
+            Base.metadata.create_all(engine)
+        
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            
+            return session      
 
     def version(cls):
         print("version:", VERSION)
 
     version = classmethod(version)
 
+    @classmethod
     def debug_server_client(self, msg, server_host = '127.0.0.1', port = 50001):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -258,44 +681,48 @@ class debugger(object):
                     host, port = str(i).strip().split(":")
                     port = int(port.strip())
                     host = host.strip()
-                    if not host:
-                        host = '127.0.0.1'
+                    if not host: host = '127.0.0.1'
                 else:
                     if str(i).isdigit():
                         host = '127.0.0.1'
                         port = int(i)
                     else:
                         host = i.strip()
-                if host == '0.0.0.0':
-                    host = '127.0.0.1'
-                # print ("host =", host)
-                # print ("port =", port)
-                # print("message =", str(msg))
+                        
+                if host == '0.0.0.0': host = '127.0.0.1'
+                
                 try:
-                    s.sendto(bytes(msg.encode('utf-8')), (host, port))
-                except UnicodeDecodeError:
-                    pass
-                except OSError:
-                    pass
+                    if hasattr(msg, 'decode') and sys.version_info.major == 2:
+                        msg = msg.encode('utf-8')
+                        s.sendto(msg, (host, port))
+                    else:
+                        if not hasattr(msg, 'decode'):
+                            s.sendto(bytes(msg.encode('utf-8')), (host, port))
+                        else:
+                            s.sendto(msg, (host, port))
+                #except UnicodeDecodeError:
+                    #pass
+                #except OSError:
+                    #pass
                 except:
-                    #if os.getenv('DEBUG') == '1':
-                    traceback.format_exc()
+                    print(traceback.format_exc())
                 s.close()
         else:
-            print("self.read_config('DEBUGGER', 'HOST') =", self.read_config('DEBUGGER', 'HOST'))
-            if self.read_config('DEBUGGER', 'HOST'):
-                if ":" in self.read_config('DEBUGGER', 'HOST'):
-                    host, port = str(self.read_config('DEBUGGER', 'HOST')).strip().split(":")
+            if self.CONFIG.get_config('DEBUGGER', 'HOST'):
+                if ":" in self.CONFIG.get_config('DEBUGGER', 'HOST'):
+                    host, port = str(self.CONFIG.get_config('DEBUGGER', 'HOST')).strip().split(":")
                     port = int(port.strip())
                     host = host.strip()
                 else:
-                    host = self.read_config('DEBUGGER', 'HOST').strip()
+                    host = self.CONFIG.get_config('DEBUGGER', 'HOST').strip()
                 s.sendto(msg, (host, port))
                 s.close()                
-
+    
+    @classmethod
     def setDebug(self, debug):
         self.DEBUG = debug
 
+    @classmethod
     def get_len(self, objects):
         if isinstance(objects, list) or isinstance(objects, tuple) or isinstance(objects, dict):
             return len(objects)
@@ -307,20 +734,21 @@ class debugger(object):
                     return len(str(objects))
             else:
                 return len(str(objects))
-
         return 0
 
+    @classmethod
     def track(self, check = False):
         if not check:
-            if self.read_config('DEBUG', 'debug') == 1 or os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
+            if self.CONFIG.get_config('DEBUG', 'debug') == 1 or os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
                 traceback.format_exc()
         else:
-            if self.read_config('DEBUG', 'debug') == 1: #or os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
+            if self.CONFIG.get_config('DEBUG', 'debug') == 1: #or os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
                 return True
         return False
 
+    @classmethod
     def colored(self, strings, fore, back = None, with_colorama = False, attrs = []):
-        if self.read_config('COLORS', 'colorama') == 1 or os.getenv('colorama') == 1 or with_colorama:
+        if self.CONFIG.get_config('COLORS', 'colorama') == 1 or os.getenv('colorama') == 1 or with_colorama:
             if back:
                 return fore + strings + back
             else:
@@ -328,21 +756,32 @@ class debugger(object):
         else:
             return make_colors(strings, fore, back, attrs)
 
-
+    @classmethod
+    def insert_db(self, message, username=None, password=None, hostname=None, dbname=None):
+        if USE_SQL:
+            session = self.create_db()
+            try:
+                new_data = DebugDB(message=message)
+                session.add(new_data)
+                session.commit()
+                session.close()
+                return True
+            except:
+                print(traceback.format_exc())
+                return False
+    
+    @classmethod
     def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
         
         cls = False
         formatlist = ''
         if DEBUG_SERVER: debug_server = True
-
         if not filename: filename = self.FILENAME
 
         frame = inspect.currentframe()
         args, _, _, values = inspect.getargvalues(frame)
 
-        if not debug:
-            debug = self.DEBUG
-        
+        debug = debug or self.DEBUG
         color_random_1 = ['lightgreen', 'lightyellow', 'lightwhite', 'lightcyan', 'lightmagenta']
         
         arrow = make_colors(' -> ', 'lg')
@@ -478,14 +917,19 @@ class debugger(object):
             except:
                 self.track()
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + defname_parent1 + formatlist + "[" + str(filename) + "] [" + str(inspect.stack()[1][2]) + "] "  + line_number
+                
+        #print('os.getenv("DEBUG")     =', os.getenv("DEBUG"))
+        #print('DEBUG                  =', DEBUG)
+        #print('self.track(True)       =', self.track(True))
 
         if self.track(True):
             try:
-                print(formatlist)
+                if os.getenv("DEBUG") == '1' or debug or DEBUG == '1' or DEBUG == True or DEBUG == 1:
+                    print(formatlist)
             except:
                 pass
         else:
-            if os.getenv("DEBUG") == '1' or debug or DEBUG == '1' or DEBUG == True:
+            if os.getenv("DEBUG") == '1' or debug or DEBUG == '1' or DEBUG == True or DEBUG == 1:
                 try:
                     if not formatlist == 'cls':
                         if sys.version_info.major == 2:
@@ -497,8 +941,7 @@ class debugger(object):
 
         if DEBUG_SERVER or debug:
             # self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
-            if cls:
-                formatlist = 'cls'
+            if cls: formatlist = 'cls'
             
             self.debug_server_client(formatlist)
         cls = False
@@ -508,12 +951,9 @@ class debugger(object):
         return formatlist
 
 def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
-    global CONFIG_NAME
-    try:
-        if read_config('RECEIVER', 'HOST', CONFIG_NAME):
-            RECEIVER_HOST = read_config('RECEIVER', 'HOST', CONFIG_NAME)
-    except:
-        pass
+    if CONFIG.get_config('RECEIVER', 'HOST', CONFIG_NAME):
+        RECEIVER_HOST = CONFIG.get_config('RECEIVER', 'HOST', CONFIG_NAME)
+    
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     if RECEIVER_HOST:
         for i in RECEIVER_HOST:
@@ -568,10 +1008,8 @@ def get_config(section, option, configname = 'debug.ini', value = ''):
     return data    
 
 def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
-    if on_top:
-        set_detach(center = center, on_top = on_top)
-    global DEBUGGER_SERVER
-    import socket
+    on_top = CONFIG.get_config('display', 'on_top') or on_top
+    if on_top: set_detach(center = center, on_top = on_top)
     host1 = ''
     port1 = ''
     if DEBUGGER_SERVER:
@@ -580,8 +1018,7 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 if ":" in i:
                     host1, port1 = str(i).split(":")
                     port1 = int(port1)
-                    if not host1:
-                        host1 = '127.0.0.1'
+                    if not host1: host1 = '127.0.0.1'
                 else:
                     if str(i).isdigit():
                         port1 = int(i)
@@ -591,8 +1028,7 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
             if ":" in DEBUGGER_SERVER:
                 host1, port1 = str(DEBUGGER_SERVER).split(":")
                 port1 = int(port1)
-                if not host1:
-                    host1 = '127.0.0.1'
+                if not host1: host1 = '127.0.0.1'
             else:
                 if str(DEBUGGER_SERVER).isdigit():
                     port1 = int(i)
@@ -600,21 +1036,22 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                     host1 = DEBUGGER_SERVER
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     if not host:
-        if get_config('DEBUGGER', 'HOST', value= '0.0.0.0'):
-            host = get_config('DEBUGGER', 'HOST')
+        if CONFIG.get_config('DEBUGGER', 'HOST', value= '0.0.0.0'):
+            host = CONFIG.get_config('DEBUGGER', 'HOST')
         else:
             host = host1
     if not port:
-        if get_config('DEBUGGER', 'PORT', value= '50001'):
-            port = get_config('DEBUGGER', 'PORT')
+        if CONFIG.get_config('DEBUGGER', 'PORT', value= '50001'):
+            port = CONFIG.get_config('DEBUGGER', 'PORT')
             port = int(port)
         else:
             port = port1
-    #print ("DEBUGGER_SERVER =", DEBUGGER_SERVER)
+    
     if not host:
         host = '127.0.0.1'
     if not port:
         port = 50001
+        
     while 1:
         try:
             s.bind((host, int(port)))
@@ -633,8 +1070,6 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                     os.system('clear')
             else:
                 showme()
-                if hasattr(msg, 'decode'):
-                    msg = msg.decode('utf-8', errors = "ignore")
                 print(str(msg))
             if sys.platform == 'win32':
                 print("=" * (MAX_WIDTH - 3))
@@ -656,6 +1091,8 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
     
+    c.insert_db(msg)
+    
     return msg
 
 def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer_column = 9000, buffer_row = 77, on_top = True):
@@ -666,8 +1103,7 @@ def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer
     setting.setBuffer(buffer_row, buffer_column)
     screensize = setting.getScreenSize()
     setting.setSize(width, height, screensize[0] - width, y, center)
-    if on_top:
-        setting.setAlwaysOnTop(width, height, screensize[0] - width, y, center)
+    if on_top: setting.setAlwaysOnTop(width, height, screensize[0] - width, y, center)
 
 def showme():
     if not sys.platform == 'win32':
@@ -763,7 +1199,7 @@ def usage():
         global HANDLE
         # import win32gui, win32con
         if sys.platform == 'win32':
-            kernel32 = ctypes.WinDLL('kernel32')
+            #kernel32 = ctypes.WinDLL('kernel32')
             # handle = kernel32.GetStdHandle(-11)
             # handle1 = win32gui.GetForegroundWindow()
             handle2 = ctypes.windll.user32.GetForegroundWindow()

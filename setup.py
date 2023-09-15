@@ -1,5 +1,5 @@
 import io
-import re
+#import re
 from setuptools import setup
 
 import os
@@ -31,7 +31,7 @@ setup(
     author_email="cumulus13@gmail.com",
     maintainer="cumulus13 Team",
     maintainer_email="cumulus13@gmail.com",
-    description="print objects with colored with less info",
+    description="print objects with colored with more info",
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=["pydebugger"],
@@ -46,7 +46,7 @@ setup(
              "pydebugger = pydebugger.debug:usage",
          ]
     },
-    data_files=['__version__.py', 'README.rst', 'LICENSE.rst'],
+    package_data={'': ['*.ini', '*.rst', '*.md'],}, 
     include_package_data=True,
     python_requires=">=2.7",
     classifiers=[
