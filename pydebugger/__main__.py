@@ -1,4 +1,4 @@
 #!/usr/bin/python2
 
-import debug
-debug.usage()
+from . debug import usage
+usage()

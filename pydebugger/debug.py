@@ -955,37 +955,38 @@ class debugger(object):
     def db_log(self):
         session = self.create_db()
         last_id_first = session.query(DebugDB.id).order_by(DebugDB.id.desc()).first()[0]
-        try:
-            while 1:
-                data = session.query(DebugDB).order_by(DebugDB.id.desc()).first()
-                last_id = data.id
-                if not last_id == last_id_first:
-                    #data = ActivityLog.objects.filter(id__range=(last_id_first, last_id)).order_by('id')[:obj.count()]
-                    # Query the data using SQLAlchemy
-                    query = session.query(DebugDB).filter(DebugDB.id > last_id_first, DebugDB.id <= last_id).order_by(DebugDB.id)
-                    
-                    # Retrieve the count using SQLAlchemy's count method
-                    count = query.count()
-                    
-                    # Specify the limit for the number of results
-                    limit = count  # Retrieve all rows within the specified range
-                    
-                    # Apply the limit to the query
-                    query = query.limit(limit)
-                    
-                    # Execute the query to get the results
-                    data = query.all()
-                    
-                    data = query.all()
-                    last_id_first = last_id
-                    for i in data:
-                        message = i.message
-                        if hasattr(message, 'decode'): message = message.decode('utf-8')
-                        print(message)
-                    time.sleep(0.5)
-                    
-        except KeyboardInterrupt:
-            sys.exit(0)
+        if last_id_first:
+            try:
+                while 1:
+                    data = session.query(DebugDB).order_by(DebugDB.id.desc()).first()
+                    last_id = data.id
+                    if not last_id == last_id_first:
+                        #data = ActivityLog.objects.filter(id__range=(last_id_first, last_id)).order_by('id')[:obj.count()]
+                        # Query the data using SQLAlchemy
+                        query = session.query(DebugDB).filter(DebugDB.id > last_id_first, DebugDB.id <= last_id).order_by(DebugDB.id)
+                        
+                        # Retrieve the count using SQLAlchemy's count method
+                        count = query.count()
+                        
+                        # Specify the limit for the number of results
+                        limit = count  # Retrieve all rows within the specified range
+                        
+                        # Apply the limit to the query
+                        query = query.limit(limit)
+                        
+                        # Execute the query to get the results
+                        data = query.all()
+                        
+                        data = query.all()
+                        last_id_first = last_id
+                        for i in data:
+                            message = i.message
+                            if hasattr(message, 'decode'): message = message.decode('utf-8')
+                            print(message)
+                        time.sleep(0.5)
+                        
+            except KeyboardInterrupt:
+                sys.exit(0)
             
 def debug_server_client(msg, server_host = '127.0.0.1', port = 50001):
     if CONFIG.get_config('RECEIVER', 'HOST', CONFIG_NAME):
