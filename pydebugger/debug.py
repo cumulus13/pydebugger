@@ -1269,6 +1269,7 @@ def usage():
     parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
     parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
     parser.add_argument('-l', '--db-log', action = 'store_true', help = 'Get the print log from Database')
+    parser.add_argument('-L', '--db-log-tag', action = 'store', help = 'Get the print log from Database with Tag')
     if len(sys.argv) == 1:
         print("\n")
         parser.print_help()
@@ -1283,6 +1284,8 @@ def usage():
             cleanup(args.cleanup)
         elif args.db_log:
             debugger.db_log()
+        elif args.db_log_tag:
+            debugger.db_log(args.db_log_tag)
         else:
             try:
                 serve(args.host, args.port, args.on_top, args.center)
