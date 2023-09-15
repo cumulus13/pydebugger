@@ -39,7 +39,8 @@ setup(
         'make_colors>=3.12',
         'configset',
         'cmdw',
-        'configparser'
+        'configparser',
+        'sqlalchemy'
     ],
     entry_points = {
          "console_scripts": [
