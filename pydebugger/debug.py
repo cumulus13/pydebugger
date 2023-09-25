@@ -764,15 +764,16 @@ class debugger(object):
     def insert_db(self, message, username=None, password=None, hostname=None, dbname=None, tag = 'debug'):
         tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
         if USE_SQL:
-            session = self.create_db()
             try:
+                session = self.create_db()
                 new_data = DebugDB(message=message, tag = tag)
                 session.add(new_data)
                 session.commit()
                 session.close()
                 return True
             except:
-                print(traceback.format_exc())
+                if os.getenv('DEBUG') == '1':
+                    print(traceback.format_exc())
                 return False
     
     @classmethod
@@ -871,7 +872,7 @@ class debugger(object):
         the_class = ''
         
         if defname and isinstance(defname, str):
-            if filename == None:
+            if not filename:
                 #frame = inspect.stack()[1]
                 #module = inspect.getmodule(frame[0])
                 #filename = module.__file__
@@ -917,8 +918,7 @@ class debugger(object):
                 linenumbers = str(linenumbers).strip()
                 line_number = linenumbers + make_colors("PID:", 'r', 'lg', force = force) + make_colors(str(PID), 'lw', force = force)
                 linenumbers = " [" + make_colors(str(linenumbers)[1:], 'r', 'lw', force = force) + make_colors("PID:", 'r', 'lg', force = force) + make_colors(str(PID), 'lw', force = force)
-            if filename == None:
-                filename = sys.argv[0]
+            if not filename: filename = sys.argv[0]
             try:
                 formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'b', 'lc', force = force) + " " + make_colors(defname, 'lw', 'lr', force = force) + make_colors(arrow, 'lr', force = force) + defname_parent + formatlist + "[" + make_colors(defname + ":", 'lw', 'lr', force = force) + make_colors(str(filename) + "]", 'lg', force = force) + " " + line_number
             except:
@@ -1130,6 +1130,9 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                     os.system('clear')
             else:
                 showme()
+                if sys.version_info.major == 3:
+                    if hasattr(msg, 'decode'):
+                        msg = msg.decode('utf-8')
                 print(str(msg))
             if sys.platform == 'win32':
                 print("=" * (MAX_WIDTH - 3))
