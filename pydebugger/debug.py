@@ -662,7 +662,12 @@ class debugger(object):
             engine_config = f'{dbtype}://{username}:{password_encoded}@{hostname}/{dbname}'
             engine = create_engine(engine_config, echo=self.CONFIG.get_config('logging', 'verbose', 'False'))
             
-            Base.metadata.create_all(engine)
+            while 1:
+                try:
+                    Base.metadata.create_all(engine)
+                    break
+                except:
+                    pass
         
             Session = sessionmaker(bind=engine)
             session = Session()
@@ -764,6 +769,7 @@ class debugger(object):
     def insert_db(self, message, username=None, password=None, hostname=None, dbname=None, tag = 'debug'):
         tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
         if USE_SQL:
+            session = self.create_db()
             try:
                 session = self.create_db()
                 new_data = DebugDB(message=message, tag = tag)
@@ -1123,6 +1129,8 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
     while 1:
         msg = s.recv(6556500)
         if msg:
+            if hasattr(msg, 'decode'):
+                msg = msg.decode('utf-8')
             if msg == 'cls' or msg == 'clear':
                 if sys.platform == 'win32':
                     os.system('cls')
@@ -1130,9 +1138,6 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                     os.system('clear')
             else:
                 showme()
-                if sys.version_info.major == 3:
-                    if hasattr(msg, 'decode'):
-                        msg = msg.decode('utf-8')
                 print(str(msg))
             if sys.platform == 'win32':
                 print("=" * (MAX_WIDTH - 3))
