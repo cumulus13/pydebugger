@@ -1160,7 +1160,8 @@ def debug(defname = None, debug = None, debug_server = False, line_number = '', 
     
     msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
     
-    c.insert_db(msg, tag)
+    if CONFIG.get_config('database', 'active') == 1 or CONFIG.get_config('database', 'active') == True:
+        c.insert_db(msg, tag)
     
     return msg
 
