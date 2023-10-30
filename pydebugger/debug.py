@@ -680,8 +680,18 @@ class debugger(object):
     version = classmethod(version)
 
     @classmethod
-    def debug_server_client(self, msg, server_host = '127.0.0.1', port = 50001):
-
+    def debug_server_client(self, msg, server_host = '127.0.0.1', port = None):
+        global DEBUGGER_SERVER
+        #print("PORT 1:", port)
+        #print("DEBUGGER_SERVER 1:", DEBUGGER_SERVER)
+        if isinstance(DEBUGGER_SERVER, list) and str(DEBUGGER_SERVER[0]).isdigit() and port:
+            DEBUGGER_SERVER = [str(port)]
+        else:
+            port = port or 50001
+        
+        #print("PORT 2:", port)
+        #print("DEBUGGER_SERVER 2:", DEBUGGER_SERVER)
+        
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         if DEBUGGER_SERVER:
@@ -956,7 +966,7 @@ class debugger(object):
             # self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
             if cls: formatlist = 'cls'
             
-            self.debug_server_client(formatlist)
+            self.debug_server_client(formatlist, port = kwargs.get('port', 50001))
         cls = False
         #if debug_server:
             #self.debug_server_client(formatlist)
