@@ -1147,7 +1147,8 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 else:
                     os.system('clear')
             else:
-                showme()
+                if CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True:
+                    showme()
                 print(str(msg))
             if sys.platform == 'win32':
                 print("=" * (MAX_WIDTH - 3))
