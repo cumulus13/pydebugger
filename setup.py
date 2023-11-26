@@ -35,6 +35,10 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=["pydebugger"],
+    data_files=['__version__.py', 'README.rst', 'LICENSE.rst'],
+    package_data = {
+       '': ['*.txt', '*.ini', '*.rst', '*.py'] 
+    },     
     install_requires=[
         'make_colors>=3.12',
         'configset',
