@@ -638,7 +638,16 @@ force = False
 class debugger(object):
 
     CONFIG_NAME = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'debug.ini')
-    VERSION = "x.x"
+    try:
+        from . import __version__
+        VERSION = __version__
+    except:
+        try:
+            import __version__
+            VERSION = __version__
+        except:
+            VERSION = 'UNKNOWN'
+            
     DEBUG = DEBUG
     CONFIG = configset(CONFIG_NAME)
     FILENAME = FILENAME
@@ -659,7 +668,14 @@ class debugger(object):
             
             password_encoded = quote_plus(password)
             
-            engine_config = f'{dbtype}://{username}:{password_encoded}@{hostname}/{dbname}'
+            #engine_config = f'{dbtype}://{username}:{password_encoded}@{hostname}/{dbname}'
+            engine_config ="{0}://{1}:{2}@{3}/{4}".format(
+                dbtype,
+                username,
+                password_encoded,
+                hostname,
+                dbname
+            )            
             engine = create_engine(engine_config, echo=self.CONFIG.get_config('logging', 'verbose', 'False'))
             
             while 1:
@@ -675,7 +691,7 @@ class debugger(object):
             return session      
 
     def version(cls):
-        print("version:", VERSION)
+        print("version:", cls.VERSION)
 
     version = classmethod(version)
 
