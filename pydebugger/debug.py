@@ -22,7 +22,10 @@ import re
 import traceback
 import ctypes
 if not sys.platform == 'win32': import ctypes
-from urllib.parse import quote_plus
+if sys.version_info.major == 2:
+    from urllib import quote_plus
+else:
+    from urllib.parse import quote_plus
 import socket
 from collections import OrderedDict
 import ast, json
