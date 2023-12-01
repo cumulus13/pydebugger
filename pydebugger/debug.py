@@ -659,7 +659,8 @@ class debugger(object):
             
             password_encoded = quote_plus(password)
             
-            engine_config = f'{dbtype}://{username}:{password_encoded}@{hostname}/{dbname}'
+            #engine_config = f'{dbtype}://{username}:{password_encoded}@{hostname}/{dbname}'
+            engine_config = '{0}://{1}:{2}@{3}/{4}'.format(dbtype, username, password_encoded, hostname, dbname)
             engine = create_engine(engine_config, echo=self.CONFIG.get_config('logging', 'verbose', 'False'))
             
             while 1:
@@ -792,88 +793,164 @@ class debugger(object):
                     print(traceback.format_exc())
                 return False
     
+        
+    #def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):    
     @classmethod
-    def printlist(self, defname = None, debug = None, filename = '', linenumbers = '', print_function_parameters = False, **kwargs):
+    def printlist(self, *args, **kwargs):
+        
+        print("args [1]   =", args)
+        print("kwargs [1] =", kwargs)
+        
+        defname = None
+        debug = None
+        filename = ''
+        linenumbers = ''
+        
+        for i in kwargs:
+            if i == 'filename' and value:
+                filename = kwargs.get(i)
+            elif i == 'defname' and kwargs.get(i):
+                defname = kwargs.get(i)
+            elif i == 'debug' and kwargs.get(i):
+                debug = kwargs.get(i)
+            elif i == 'linenumbers' and kwargs.get(i):
+                linenumbers = kwargs.get(i)
+                
+        if not filename: filename = self.FILENAME
         
         force = os.getenv('MAKE_COLORS_FORCE') or self.CONFIG.get_config('make_colors', 'force') == 1 or self.CONFIG.get_config('make_colors', 'force') == True
         
         cls = False
         formatlist = ''
         if DEBUG_SERVER: debug_server = True
-        if not filename: filename = self.FILENAME
-
-        frame = inspect.currentframe()
-        args, _, _, values = inspect.getargvalues(frame)
-
-        debug = debug or self.DEBUG
-        color_random_1 = ['lightgreen', 'lightyellow', 'lightwhite', 'lightcyan', 'lightmagenta']
         
         arrow = make_colors(' -> ', 'lg', force = force)
-            
-        if print_function_parameters:
-            for i in args:
-                if i == 'self':
-                    pass
-                else:
+        
+        caller_locals = inspect.currentframe().f_back.f_locals
+        
+        print("args [2] =", args)
+        
+        if args:
+            try:
+                for arg in args:
+                    if isinstance(arg, str):
+                        found = False
+                        for name, value in caller_locals.items():
+                            if name not in ['filename', 'debug', 'defname', 'linenumbers']:
+                                if arg == name or (callable(value) and hasattr(value, '__name__') and value.__name__ == arg):
+                                    found = True
+                                    printed = True
+                                    
+                                    if sys.version_info.major == 2:
+                                        name = name.encode('utf-8')
+                                    if str(name) == "cls" or str(name) == "clear":
+                                        cls = True                            
+                                    
+                                    if value == '' or value == None:
+                                        formatlist += make_colors(str(name), 'lw', 'bl', force = force) + arrow
+                                    else:
+                                        if sys.version_info.major == 2:
+                                            formatlist += make_colors((str(name) + ": "), 'b', 'ly', force = force) + make_colors(unicode(value), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(value)), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(value)), 'lightmagenta', force = force) + arrow 
+                                        else:
+                                            formatlist += make_colors((str(name) + ": "), 'b', 'ly', force = force) + make_colors(str(value), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(value)), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(value)), 'lightmagenta', force = force) + arrow
+                                    break
+                                
+                        if not found:
+                            printed = True
+                            print(f"start {arg} ..........")                
+                                            
+                    else:
+                        variables = [name for name, value in caller_locals.items() if value == arg]
+                        if variables:
+                            printed = True
+                            for name in variables:
+                                print(f"{name} [2] = {arg}")
+                                
+                                if sys.version_info.major == 2:
+                                    name = name.encode('utf-8')
+                                if str(name) == "cls" or str(name) == "clear":
+                                    cls = True                            
+                                
+                                if arg == '' or arg == None:
+                                    formatlist += make_colors(str(name), 'lw', 'bl', force = force) + arrow
+                                else:
+                                    if sys.version_info.major == 2:
+                                        formatlist += make_colors((str(name) + ": "), 'b', 'ly', force = force) + make_colors(unicode(arg), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(arg)), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(arg)), 'lightmagenta', force = force) + arrow 
+                                    else:
+                                        formatlist += make_colors((str(name) + ": "), 'b', 'ly', force = force) + make_colors(str(arg), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(arg)), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(arg)), 'lightmagenta', force = force) + arrow                        
+                                
+                                                        
+                        if value == arg:
+                            print(f"{name} = {value}")
+                            
+                            if name not in ['filename', 'debug', 'defname', 'linenumbers']:
+                                if sys.version_info.major == 2:
+                                    name = name.encode('utf-8')
+                                if str(name) == "cls" or str(name) == "clear":
+                                    cls = True
+                                    
+                                try:
+                                    if value == '' or value == None:
+                                        formatlist += make_colors(str(name), 'lw', 'bl', force = force) + arrow
+                                    else:
+                                        if sys.version_info.major == 2:
+                                            formatlist += make_colors((str(name) + ": "), 'b', 'ly', force = force) + make_colors(unicode(value), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(value)), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(value)), 'lightmagenta', force = force) + arrow 
+                                        else:
+                                            formatlist += make_colors((str(name) + ": "), 'b', 'ly', force = force) + make_colors(str(value), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(value)), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(value)), 'lightmagenta', force = force) + arrow
+                                except:
+                                    if os.getenv('DEBUG'):
+                                        traceback.format_exc()
+                                    if os.getenv('DEBUG_ERROR'):
+                                        try:
+                                            self.debug_server_client(traceback.format_exc(print_msg=False))
+                                        except:
+                                            try:
+                                                self.debug_server_client(traceback.format_exc())
+                                            except:
+                                                print("Send traceback ERROR [290]")
+                
+                                    try:
+                                        if value == '' or value == None:
+                                            formatlist += str(name).encode('utf-8') + arrow
+                                        else:
+                                            formatlist += str(name) + ": " + str(value) + arrow
+                                    except:
+                                        if os.getenv('DEBUG_ERROR'):
+                                            try:
+                                                self.debug_server_client(traceback.format_exc(print_msg=False))
+                                            except:
+                                                try:
+                                                    self.debug_server_client(traceback.format_exc())
+                                                except:
+                                                    print("Send traceback ERROR [290]")                        
+                
+            except:
+                if os.getenv('DEBUG'):
+                    traceback.format_exc()
+                if os.getenv('DEBUG_ERROR'):
                     try:
-                        if sys.platform == 'win32':
-                            formatlist = make_colors((str(i) + ": "), 'lw', 'bl', force = force) + make_colors(str(values[i]), color_random_1[int(args.index(i))], force = force) + arrow
-                        else:
-                            formatlist = termcolor.colored((str(i) + ": "), 'lw', 'bl') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
+                        self.debug_server_client(traceback.format_exc(print_msg=False))
                     except:
-                        formatlist = str(i) + ": " + str(values[i]) + arrow
-                    if not defname:
-                        defname = str(inspect.stack()[1][3])
-                    if filename == None:
-                        filename = sys.argv[0]
-                    linenumbers = str(inspect.stack()[1][2])
-                    try:
-                        if sys.platform == 'win32':
-                            formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'lw', 'lr') + formatlist + " " + "[" + str(filename) + "]" + " " + " [" + make_colors(str(linenumbers), 'lw', 'lc') + "] "
-                        else:
-                            formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'lw', 'lr') + formatlist + " " + "[" + str(filename) + "]" + " "  + " [" + termcolor.colored(str(linenumbers), 'lw', 'lc') + "] "
-                    except:
-                        formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " " + " [" + str(linenumbers) + "] "
-                    if debug:
-                        print(formatlist)
-                    if DEBUG_SERVER:
-                        self.debug_server_client(formatlist)            
-            return formatlist
-        if not kwargs == {}:
-            for i in kwargs:
-                if sys.version_info.major == 2:
-                    i = i.encode('utf-8')
-                if str(i) == "cls" or str(i) == "clear":
-                    cls = True                
+                        print("Send traceback ERROR [290]")
+    
                 try:
                     if kwargs.get(i) == '' or kwargs.get(i) == None:
-                        formatlist += make_colors((str(i)), 'lw', 'bl', force = force) + arrow
+                        formatlist += str(i).encode('utf-8') + arrow
                     else:
-                        if sys.version_info.major == 2:
-                            formatlist += make_colors(str(i) + ": ", 'b', 'ly', force = force) + make_colors(unicode(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow 
-                        else:
-                            formatlist += make_colors((str(i) + ": "), 'b', 'ly', force = force) + make_colors(str(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow
+                        formatlist += str(i) + ": " + str(kwargs.get(i)) + arrow
                 except:
-                    if os.getenv('DEBUG'):
-                        traceback.format_exc()
                     if os.getenv('DEBUG_ERROR'):
                         try:
                             self.debug_server_client(traceback.format_exc(print_msg=False))
                         except:
                             print("Send traceback ERROR [290]")
-
-                    try:
-                        if kwargs.get(i) == '' or kwargs.get(i) == None:
-                            formatlist += str(i).encode('utf-8') + arrow
-                        else:
-                            formatlist += str(i) + ": " + str(kwargs.get(i)) + arrow
-                    except:
-                        if os.getenv('DEBUG_ERROR'):
-                            try:
-                                self.debug_server_client(traceback.format_exc(print_msg=False))
-                            except:
-                                print("Send traceback ERROR [290]")
+                                                
+            if not printed:
+                print("No matching variables or functions found.")
+               
         else:
+            color_random_1 = ['lightgreen', 'lightyellow', 'lightwhite', 'lightcyan', 'lightmagenta']
+            debug = debug or self.DEBUG
             try:
                 formatlist += " " + make_colors("start ... ", random.choice(color_random_1), force = force) + arrow
             except:
@@ -881,11 +958,100 @@ class debugger(object):
                     formatlist += " start... " + arrow
                 except:
                     formatlist += " start... " + ' -> '
-
+                    
+        
         formatlist = formatlist[:-4]
         defname_parent = ''
         defname_parent1 = ''
-        the_class = ''
+        the_class = ''        
+                    
+        #######################################################################
+        #if not filename: filename = self.FILENAME
+
+        #frame = inspect.currentframe()
+        #args, _, _, values = inspect.getargvalues(frame)
+
+        #debug = debug or self.DEBUG
+        #color_random_1 = ['lightgreen', 'lightyellow', 'lightwhite', 'lightcyan', 'lightmagenta']
+        
+        #arrow = make_colors(' -> ', 'lg', force = force)
+            
+        #if print_function_parameters:
+            #for i in args:
+                #if i == 'self':
+                    #pass
+                #else:
+                    #try:
+                        #if sys.platform == 'win32':
+                            #formatlist = make_colors((str(i) + ": "), 'lw', 'bl', force = force) + make_colors(str(values[i]), color_random_1[int(args.index(i))], force = force) + arrow
+                        #else:
+                            #formatlist = termcolor.colored((str(i) + ": "), 'lw', 'bl') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
+                    #except:
+                        #formatlist = str(i) + ": " + str(values[i]) + arrow
+                    #if not defname:
+                        #defname = str(inspect.stack()[1][3])
+                    #if filename == None:
+                        #filename = sys.argv[0]
+                    #linenumbers = str(inspect.stack()[1][2])
+                    #try:
+                        #if sys.platform == 'win32':
+                            #formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'lw', 'lr') + formatlist + " " + "[" + str(filename) + "]" + " " + " [" + make_colors(str(linenumbers), 'lw', 'lc') + "] "
+                        #else:
+                            #formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'lw', 'lr') + formatlist + " " + "[" + str(filename) + "]" + " "  + " [" + termcolor.colored(str(linenumbers), 'lw', 'lc') + "] "
+                    #except:
+                        #formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " " + " [" + str(linenumbers) + "] "
+                    #if debug:
+                        #print(formatlist)
+                    #if DEBUG_SERVER:
+                        #self.debug_server_client(formatlist)            
+            #return formatlist
+        #if not kwargs == {}:
+            #for i in kwargs:
+                #if sys.version_info.major == 2:
+                    #i = i.encode('utf-8')
+                #if str(i) == "cls" or str(i) == "clear":
+                    #cls = True                
+                #try:
+                    #if kwargs.get(i) == '' or kwargs.get(i) == None:
+                        #formatlist += make_colors((str(i)), 'lw', 'bl', force = force) + arrow
+                    #else:
+                        #if sys.version_info.major == 2:
+                            #formatlist += make_colors(str(i) + ": ", 'b', 'ly', force = force) + make_colors(unicode(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow 
+                        #else:
+                            #formatlist += make_colors((str(i) + ": "), 'b', 'ly', force = force) + make_colors(str(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow
+                #except:
+                    #if os.getenv('DEBUG'):
+                        #traceback.format_exc()
+                    #if os.getenv('DEBUG_ERROR'):
+                        #try:
+                            #self.debug_server_client(traceback.format_exc(print_msg=False))
+                        #except:
+                            #print("Send traceback ERROR [290]")
+
+                    #try:
+                        #if kwargs.get(i) == '' or kwargs.get(i) == None:
+                            #formatlist += str(i).encode('utf-8') + arrow
+                        #else:
+                            #formatlist += str(i) + ": " + str(kwargs.get(i)) + arrow
+                    #except:
+                        #if os.getenv('DEBUG_ERROR'):
+                            #try:
+                                #self.debug_server_client(traceback.format_exc(print_msg=False))
+                            #except:
+                                #print("Send traceback ERROR [290]")
+        #else:
+            #try:
+                #formatlist += " " + make_colors("start ... ", random.choice(color_random_1), force = force) + arrow
+            #except:
+                #try:
+                    #formatlist += " start... " + arrow
+                #except:
+                    #formatlist += " start... " + ' -> '
+
+        #formatlist = formatlist[:-4]
+        #defname_parent = ''
+        #defname_parent1 = ''
+        #the_class = ''
         
         if defname and isinstance(defname, str):
             if not filename:
@@ -1147,6 +1313,8 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 else:
                     os.system('clear')
             else:
+                #print("CONFIG.get_config('display', 'on_top') =", CONFIG.get_config('display', 'on_top'))
+                #print("CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True =", CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True)
                 if CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True:
                     showme()
                 print(str(msg))
