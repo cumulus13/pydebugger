@@ -46,7 +46,9 @@ You can set OS Environment DEBUG=1 or DEBUG=True to avoid parameter "debug=True"
     debug(variable1="data1")
 
 or you just run "debug.py" to provider debug server with Client support OS Environment
-	
+
+.. code-block:: bash
+    
 	DEBUG_SERVER=1
 	DEBUGGER_SERVER=0.0.0.0:50001
 
