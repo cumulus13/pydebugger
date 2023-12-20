@@ -1,7 +1,7 @@
 pydebugger
 ==================
 
-print objects with colored with less info
+print objects stack info with colored.
 
 
 Installing
