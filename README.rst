@@ -60,6 +60,6 @@ Support
 Links
 ------
 
-*   License: `BSD <https://bitbucket.org/licface/pydebugger/src/default/LICENSE.rst>`_
-*   Code: https://bitbucket.org/licface/pydebugger
-*   Issue tracker: https://bitbucket.org/licface/pydebugger/issues
+*   License: `BSD <https://github.com/cumulus13/pydebugger/src/default/LICENSE.rst>`_
+*   Code: https://github.com/cumulus13/pydebugger
+*   Issue tracker: https://github.com/cumulus13/pydebugger/issues
