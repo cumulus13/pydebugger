@@ -628,11 +628,8 @@ DEBUGGER_SERVER = ['127.0.0.1:50001']
 if os.getenv('DEBUGGER_SERVER'):
     if ";" in os.getenv('DEBUGGER_SERVER'):
         DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER').strip().split(";")
-    elif os.getenv('DEBUGGER_SERVER').isdigit():
-        DEBUGGER_SERVER = ['127.0.0.1:' + os.getenv('DEBUGGER_SERVER')]
     else:
         DEBUGGER_SERVER = [os.getenv('DEBUGGER_SERVER')]
-
 
 FILENAME = ''
 if os.getenv('DEBUG_FILENAME'): FILENAME = os.getenv('DEBUG_FILENAME')
@@ -675,6 +672,7 @@ class debugger(object):
             password_encoded = quote_plus(password)
             
             #engine_config = f'{dbtype}://{username}:{password_encoded}@{hostname}/{dbname}'
+<<<<<<< HEAD
             engine_config ="{0}://{1}:{2}@{3}/{4}".format(
                 dbtype,
                 username,
@@ -682,7 +680,9 @@ class debugger(object):
                 hostname,
                 dbname
             )            
-
+=======
+            engine_config = '{0}://{1}:{2}@{3}/{4}'.format(dbtype, username, password_encoded, hostname, dbname)
+>>>>>>> 0b77378cc9766af1a04f5ef89bd63417fe348ea5
             engine = create_engine(engine_config, echo=self.CONFIG.get_config('logging', 'verbose', 'False'))
             
             while 1:
@@ -879,20 +879,14 @@ class debugger(object):
                                 
                         if not found:
                             printed = True
-                            if sys.version_info.major == 3:
-                                print(f"start {arg} ..........")
-                            else:
-                                print("start {}".format(arg))
+                            print(f"start {arg} ..........")                
                                             
                     else:
                         variables = [name for name, value in caller_locals.items() if value == arg]
                         if variables:
                             printed = True
                             for name in variables:
-                                if sys.version_info.major == 3:
-                                    print(f"{name} [2] = {arg}")
-                                else:
-                                    print("{} [2] = {}".format(name, arg))
+                                print(f"{name} [2] = {arg}")
                                 
                                 if sys.version_info.major == 2:
                                     name = name.encode('utf-8')
@@ -909,10 +903,7 @@ class debugger(object):
                                 
                                                         
                         if value == arg:
-                            if sys.version_info.major == 3:
-                                print(f"{name} = {value}")
-                            else:
-                                print("{} = {}".format(name, value))
+                            print(f"{name} = {value}")
                             
                             if name not in ['filename', 'debug', 'defname', 'linenumbers']:
                                 if sys.version_info.major == 2:
@@ -994,7 +985,95 @@ class debugger(object):
         formatlist = formatlist[:-4]
         defname_parent = ''
         defname_parent1 = ''
-        the_class = ''
+        the_class = ''        
+                    
+        #######################################################################
+        #if not filename: filename = self.FILENAME
+
+        #frame = inspect.currentframe()
+        #args, _, _, values = inspect.getargvalues(frame)
+
+        #debug = debug or self.DEBUG
+        #color_random_1 = ['lightgreen', 'lightyellow', 'lightwhite', 'lightcyan', 'lightmagenta']
+        
+        #arrow = make_colors(' -> ', 'lg', force = force)
+            
+        #if print_function_parameters:
+            #for i in args:
+                #if i == 'self':
+                    #pass
+                #else:
+                    #try:
+                        #if sys.platform == 'win32':
+                            #formatlist = make_colors((str(i) + ": "), 'lw', 'bl', force = force) + make_colors(str(values[i]), color_random_1[int(args.index(i))], force = force) + arrow
+                        #else:
+                            #formatlist = termcolor.colored((str(i) + ": "), 'lw', 'bl') + color_random_1[int(args.index(i))] + str(values[i]) + arrow
+                    #except:
+                        #formatlist = str(i) + ": " + str(values[i]) + arrow
+                    #if not defname:
+                        #defname = str(inspect.stack()[1][3])
+                    #if filename == None:
+                        #filename = sys.argv[0]
+                    #linenumbers = str(inspect.stack()[1][2])
+                    #try:
+                        #if sys.platform == 'win32':
+                            #formatlist = make_colors(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + make_colors(defname + arrow, 'lw', 'lr') + formatlist + " " + "[" + str(filename) + "]" + " " + " [" + make_colors(str(linenumbers), 'lw', 'lc') + "] "
+                        #else:
+                            #formatlist = termcolor.colored(datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f'), 'white') + " " + termcolor.colored(defname + arrow, 'lw', 'lr') + formatlist + " " + "[" + str(filename) + "]" + " "  + " [" + termcolor.colored(str(linenumbers), 'lw', 'lc') + "] "
+                    #except:
+                        #formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " " + " [" + str(linenumbers) + "] "
+                    #if debug:
+                        #print(formatlist)
+                    #if DEBUG_SERVER:
+                        #self.debug_server_client(formatlist)            
+            #return formatlist
+        #if not kwargs == {}:
+            #for i in kwargs:
+                #if sys.version_info.major == 2:
+                    #i = i.encode('utf-8')
+                #if str(i) == "cls" or str(i) == "clear":
+                    #cls = True                
+                #try:
+                    #if kwargs.get(i) == '' or kwargs.get(i) == None:
+                        #formatlist += make_colors((str(i)), 'lw', 'bl', force = force) + arrow
+                    #else:
+                        #if sys.version_info.major == 2:
+                            #formatlist += make_colors(str(i) + ": ", 'b', 'ly', force = force) + make_colors(unicode(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow 
+                        #else:
+                            #formatlist += make_colors((str(i) + ": "), 'b', 'ly', force = force) + make_colors(str(kwargs.get(i)), 'lc', force = force) + arrow + make_colors("TYPE:", 'b', 'ly', force = force) + make_colors(str(type(kwargs.get(i))), 'b', 'lc', force = force) + arrow + make_colors("LEN:", 'lw', 'lm', force = force) + make_colors(str(self.get_len(kwargs.get(i))), 'lightmagenta', force = force) + arrow
+                #except:
+                    #if os.getenv('DEBUG'):
+                        #traceback.format_exc()
+                    #if os.getenv('DEBUG_ERROR'):
+                        #try:
+                            #self.debug_server_client(traceback.format_exc(print_msg=False))
+                        #except:
+                            #print("Send traceback ERROR [290]")
+
+                    #try:
+                        #if kwargs.get(i) == '' or kwargs.get(i) == None:
+                            #formatlist += str(i).encode('utf-8') + arrow
+                        #else:
+                            #formatlist += str(i) + ": " + str(kwargs.get(i)) + arrow
+                    #except:
+                        #if os.getenv('DEBUG_ERROR'):
+                            #try:
+                                #self.debug_server_client(traceback.format_exc(print_msg=False))
+                            #except:
+                                #print("Send traceback ERROR [290]")
+        #else:
+            #try:
+                #formatlist += " " + make_colors("start ... ", random.choice(color_random_1), force = force) + arrow
+            #except:
+                #try:
+                    #formatlist += " start... " + arrow
+                #except:
+                    #formatlist += " start... " + ' -> '
+
+        #formatlist = formatlist[:-4]
+        #defname_parent = ''
+        #defname_parent1 = ''
+        #the_class = ''
         
         if defname and isinstance(defname, str):
             if not filename:
@@ -1220,8 +1299,6 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 else:
                     host1 = DEBUGGER_SERVER
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65507)
-    
     if not host:
         if CONFIG.get_config('DEBUGGER', 'HOST', value= '0.0.0.0'):
             host = CONFIG.get_config('DEBUGGER', 'HOST')
@@ -1247,51 +1324,47 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
             port = port + 1
 
     print(make_colors("BIND: ", 'white', 'green', force = force) + make_colors(host, 'white', 'red', attrs= ['bold'], force = force) + ":" + make_colors(str(port), 'black', 'yellow', attrs= ['bold'], force = force))
-    try:
-        while 1:
-            #msg = s.recv(6556500)
-            msg = s.recv(65507)
-            if msg:
-                if hasattr(msg, 'decode'):
-                    msg = msg.decode('utf-8')
-                if msg == 'cls' or msg == 'clear':
-                    if sys.platform == 'win32':
-                        os.system('cls')
-                    else:
-                        os.system('clear')
-                else:
-                    if CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True:
-                        showme()
-                    print(str(msg))
+    while 1:
+        msg = s.recv(6556500)
+        if msg:
+            if hasattr(msg, 'decode'):
+                msg = msg.decode('utf-8')
+            if msg == 'cls' or msg == 'clear':
                 if sys.platform == 'win32':
-                    print("=" * (MAX_WIDTH - 3))
+                    os.system('cls')
                 else:
-                    print("=" * ((MAX_WIDTH * 2) - 3))
-    except KeyboardInterrupt:
-        os.kill(os.getpid(), signal.SIGTERM)
+                    os.system('clear')
+            else:
+                #print("CONFIG.get_config('display', 'on_top') =", CONFIG.get_config('display', 'on_top'))
+                #print("CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True =", CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True)
+                if CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True:
+                    showme()
+                print(str(msg))
+            if sys.platform == 'win32':
+                print("=" * (MAX_WIDTH - 3))
+            else:
+                print("=" * ((MAX_WIDTH * 2) - 3))
 
-class debug(debugger):
-    def __init__(self, defname = None, debug = None, debug_server = False, line_number = '', tag = 'debug', print_function_parameters = False, **kwargs):
-        super(debugger, self).__init__()
-        tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
-        
-        #if not defname:
-            #print "inspect.stack =", inspect.stack()[1][2]
-        #    defname = inspect.stack()[1][3]
-        #print("inspect.stack() =", inspect.stack())
-        #print("inspect.stack()[1][2] =", inspect.stack()[1][2])
-        #print("inspect.stack()[1][2] =", type(inspect.stack()[1][2]))
-        line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite', force = force) + "] "
-        #print("line_number =", line_number)
-        #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
-        #c = debugger(defname, debug)
-        
-        msg = self.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
-        
-        if CONFIG.get_config('database', 'active') == 1 or CONFIG.get_config('database', 'active') == True:
-            self.insert_db(msg, tag)
-        
-        #return msg
+def debug(defname = None, debug = None, debug_server = False, line_number = '', tag = 'debug', print_function_parameters = False, **kwargs):
+    tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
+    
+    #if not defname:
+        #print "inspect.stack =", inspect.stack()[1][2]
+    #    defname = inspect.stack()[1][3]
+    #print("inspect.stack() =", inspect.stack())
+    #print("inspect.stack()[1][2] =", inspect.stack()[1][2])
+    #print("inspect.stack()[1][2] =", type(inspect.stack()[1][2]))
+    line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite', force = force) + "] "
+    #print("line_number =", line_number)
+    #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
+    c = debugger(defname, debug)
+    
+    msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
+    
+    if CONFIG.get_config('database', 'active') == 1 or CONFIG.get_config('database', 'active') == True:
+        c.insert_db(msg, tag)
+    
+    return msg
 
 def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer_column = 9000, buffer_row = 77, on_top = True):
     if not sys.platform == 'win32':
@@ -1416,42 +1489,39 @@ def usage():
     # print("HANDLE 3:", handle)
     # print("HANDLE 4:", handle1)
     # print("HANDLE 5:", handle2)
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        serve(port = int(*sys.argv[1:]))
+    import argparse
+    parser = argparse.ArgumentParser(description= 'run debugger as server receive debug text default port is 50001', formatter_class= argparse.RawTextHelpFormatter)
+    parser.add_argument('-b', '--host', action = 'store', help = 'Bind / listen ip address, default all network device: 0.0.0.0', default = '0.0.0.0', type = str)
+    parser.add_argument('-p', '--port', action = 'store', help = 'Bind / listen port number, default is 50001', default = 50001, type = int)
+    parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
+    parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
+    parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
+    parser.add_argument('-l', '--db-log', action = 'store_true', help = 'Get the print log from Database')
+    parser.add_argument('-L', '--db-log-tag', action = 'store', help = 'Get the print log from Database with Tag')
+    parser.add_argument('-v', '--version', action = 'store_true', help = 'Get version number')
+    if len(sys.argv) == 1:
+        print("\n")
+        parser.print_help()
+        try:
+            args = parser.parse_args()
+            serve(args.host, args.port, args.on_top, args.center)
+        except KeyboardInterrupt:
+            sys.exit()
     else:
-        import argparse
-        parser = argparse.ArgumentParser(description= 'run debugger as server receive debug text default port is 50001', formatter_class= argparse.RawTextHelpFormatter)
-        parser.add_argument('-b', '--host', action = 'store', help = 'Bind / listen ip address, default all network device: 0.0.0.0', default = '0.0.0.0', type = str)
-        parser.add_argument('-p', '--port', action = 'store', help = 'Bind / listen port number, default is 50001', default = 50001, type = int)
-        parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
-        parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
-        parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
-        parser.add_argument('-l', '--db-log', action = 'store_true', help = 'Get the print log from Database')
-        parser.add_argument('-L', '--db-log-tag', action = 'store', help = 'Get the print log from Database with Tag')
-        parser.add_argument('-v', '--version', action = 'store_true', help = 'Get version number')
-        if len(sys.argv) == 1:
-            print("\n")
-            parser.print_help()
+        args = parser.parse_args()
+        if args.cleanup:
+            cleanup(args.cleanup)
+        elif args.db_log:
+            debugger.db_log()
+        elif args.db_log_tag:
+            debugger.db_log(args.db_log_tag)
+        elif args.version:
+            print("VERSION:", version())
+        else:
             try:
-                args = parser.parse_args()
                 serve(args.host, args.port, args.on_top, args.center)
             except KeyboardInterrupt:
                 sys.exit()
-        else:
-            args = parser.parse_args()
-            if args.cleanup:
-                cleanup(args.cleanup)
-            elif args.db_log:
-                debugger.db_log()
-            elif args.db_log_tag:
-                debugger.db_log(args.db_log_tag)
-            elif args.version:
-                print("VERSION:", version())
-            else:
-                try:
-                    serve(args.host, args.port, args.on_top, args.center)
-                except KeyboardInterrupt:
-                    sys.exit()
 
 if __name__ == '__main__':
     if sys.platform == 'win32':

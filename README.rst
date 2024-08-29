@@ -1,7 +1,7 @@
 pydebugger
 ==================
 
-print objects with colored with less info
+print objects stack info with colored.
 
 
 Installing
@@ -46,7 +46,9 @@ You can set OS Environment DEBUG=1 or DEBUG=True to avoid parameter "debug=True"
     debug(variable1="data1")
 
 or you just run "debug.py" to provider debug server with Client support OS Environment
-	
+
+.. code-block:: bash
+    
 	DEBUG_SERVER=1
 	DEBUGGER_SERVER=0.0.0.0:50001
 
@@ -60,6 +62,6 @@ Support
 Links
 ------
 
-*   License: `BSD <https://bitbucket.org/licface/pydebugger/src/default/LICENSE.rst>`_
-*   Code: https://bitbucket.org/licface/pydebugger
-*   Issue tracker: https://bitbucket.org/licface/pydebugger/issues
+*   License: `BSD <https://github.com/cumulus13/pydebugger/src/default/LICENSE.rst>`_
+*   Code: https://github.com/cumulus13/pydebugger
+*   Issue tracker: https://github.com/cumulus13/pydebugger/issues
