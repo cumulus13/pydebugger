@@ -751,8 +751,6 @@ class debugger(object):
     @classmethod
     def debug_server_client(self, msg, server_host = '127.0.0.1', port = None):
         global DEBUGGER_SERVER
-        BUFFER_SIZE = CONFIG.get_config('buffer', 'size', '1024')  # Adjust as needed
-        END_MARKER = '<END>'
         
         DEBUGGER_SERVER = self.check_debugger_server(server_host, port) or DEBUGGER_SERVER
         if not DEBUGGER_SERVER:
@@ -766,6 +764,12 @@ class debugger(object):
         def send_message(message, client_socket, host, port):
             total_sent = 0
             while total_sent < len(message):
+                BUFFER_SIZE = CONFIG.get_config('buffer', 'size', '1024')  # Adjust as needed
+                END_MARKER = '<END>'                
+                #print(f'total_sent: {total_sent}, type(total_sent): {type(total_sent)}')
+                #print(f'BUFFER_SIZE: {BUFFER_SIZE}, type(BUFFER_SIZE): {type(BUFFER_SIZE)}')
+                if isinstance(BUFFER_SIZE, list):
+                    BUFFER_SIZE = 1024
                 chunk = message[total_sent:total_sent + BUFFER_SIZE]
                 if not hasattr(chunk, 'decode'):
                     #client_socket.sendall(chunk.encode())
@@ -1244,7 +1248,7 @@ def get_max_width():
 def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
     global DEBUGGER_SERVER
     BUFFER_SIZE = CONFIG.get_config('buffer', 'size', '1024')  # Adjust as needed
-    END_MARKER = '<END>'    
+    END_MARKER = b'<END>'    
     
     if os.getenv('DEBUG_EXTRA') == '1': print("host [1]:", host)
     if os.getenv('DEBUG_EXTRA') == '1': print("port [1]:", port)
@@ -1303,15 +1307,15 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
     if host == '0.0.0.0': host = '127.0.0.1'
     
     def receive_message(server_socket):
-        full_message = ''
+        full_message = b''
         while True:
             #chunk = server_socket.recv(BUFFER_SIZE).decode() #TCP
             chunk, _ = server_socket.recvfrom(BUFFER_SIZE) #UDP
             
-            if END_MARKER.encode() in chunk:
-                full_message += chunk.decode().replace(END_MARKER, '')
+            if END_MARKER in chunk:
+                full_message += chunk.replace(END_MARKER, b'')
                 break
-            full_message += chunk.decode()
+            full_message += chunk
         return full_message
     
     #server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP
@@ -1336,8 +1340,9 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 if CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True:
                     showme()
                     
-                if hasattr(msg, 'decode') and sys.version_info.major == 2:
-                    msg = msg.decode('utf-8')
+                if hasattr(msg, 'decode'):# and sys.version_info.major == 2:
+                    #msg = msg.decode('utf-8')
+                    msg = msg.decode(errors = 'replace')
                     
                 if msg == 'cls' or msg == 'clear':
                     if sys.platform == 'win32':
