@@ -44,7 +44,8 @@ setup(
         'configset',
         'cmdw',
         'configparser',
-        'sqlalchemy'
+        'sqlalchemy',
+        'rich'
     ],
     entry_points = {
          "console_scripts": [

@@ -654,7 +654,7 @@ ConfigParser = configparser
 force = False
 
 class debugger(object):
-
+    
     CONFIG_NAME = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'debug.ini')
     try:
         from . import __version__
@@ -667,6 +667,9 @@ class debugger(object):
             VERSION = 'UNKNOWN'
             
     DEBUG = DEBUG
+    DEBUG_SERVER = DEBUG_SERVER
+    DEBUGGER_SERVER = DEBUGGER_SERVER
+    
     CONFIG = configset(CONFIG_NAME)
     FILENAME = FILENAME
     
@@ -715,20 +718,65 @@ class debugger(object):
     version = classmethod(version)
 
     @classmethod
+    def check_debugger_server(self, host = '127.0.0.1', port = '50001'):
+        global DEBUGGER_SERVER
+        BUFFER_SIZE = CONFIG.get_config('buffer', 'size', '1024')  # Adjust as needed
+        END_MARKER = '<END>'
+        
+        if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [0]:", DEBUGGER_SERVER)
+        port = port or 50001
+        if os.getenv('DEBUG_EXTRA') == '1': print("PORT:", port)
+        
+        if host and port:
+            DEBUGGER_SERVER = [str(host) + ":" + str(port)]
+            if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [2]:", DEBUGGER_SERVER)
+        #print("DEBUGGER_SERVER 1:", DEBUGGER_SERVER)
+        DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER') or DEBUGGER_SERVER
+        if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [3]:", DEBUGGER_SERVER)
+        DEBUGGER_SERVER = DEBUGGER_SERVER or '127.0.0.1'
+        if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [4]:", DEBUGGER_SERVER)
+        if isinstance(DEBUGGER_SERVER, str) and not "[" in DEBUGGER_SERVER.strip()[0] and not "]" in DEBUGGER_SERVER.strip()[-1]:
+            if str(DEBUGGER_SERVER).isdigit():
+                DEBUGGER_SERVER = ['127.0.0.1:' + str(DEBUGGER_SERVER)]
+                if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [5]:", DEBUGGER_SERVER)
+            elif not ":" in DEBUGGER_SERVER:
+                DEBUGGER_SERVER = [str(DEBUGGER_SERVER) + ":" + str(port)]
+                if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [5]:", DEBUGGER_SERVER)
+            elif str(DEBUGGER_SERVER).strip()[0] == ":":
+                DEBUGGER_SERVER = ['127.0.0.1' + str(DEBUGGER_SERVER).strip()]
+                if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [6]:", DEBUGGER_SERVER)
+        if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER [8]:", DEBUGGER_SERVER)
+        return DEBUGGER_SERVER
+        
+    @classmethod
     def debug_server_client(self, msg, server_host = '127.0.0.1', port = None):
         global DEBUGGER_SERVER
-        #print("PORT 1:", port)
-        #print("DEBUGGER_SERVER 1:", DEBUGGER_SERVER)
-        if isinstance(DEBUGGER_SERVER, list) and str(DEBUGGER_SERVER[0]).isdigit() and port:
-            DEBUGGER_SERVER = [str(port)]
-        else:
-            port = port or 50001
+        BUFFER_SIZE = CONFIG.get_config('buffer', 'size', '1024')  # Adjust as needed
+        END_MARKER = '<END>'
         
-        #print("PORT 2:", port)
-        #print("DEBUGGER_SERVER 2:", DEBUGGER_SERVER)
+        DEBUGGER_SERVER = self.check_debugger_server(server_host, port) or DEBUGGER_SERVER
+        if not DEBUGGER_SERVER:
+            DEBUGGER_SERVER = ['127.0.0.1:50001']
+        port = port or 50001
+        #client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #UDP
         
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+        total_sent = 0
+        
+        def send_message(message, client_socket, host, port):
+            total_sent = 0
+            while total_sent < len(message):
+                chunk = message[total_sent:total_sent + BUFFER_SIZE]
+                if not hasattr(chunk, 'decode'):
+                    #client_socket.sendall(chunk.encode())
+                    client_socket.sendto(chunk.encode(), (host, port))  # UDP
+                else:
+                    #client_socket.sendall(chunk)
+                    client_socket.sendto(chunk, (host, port))  # UDP
+                total_sent += BUFFER_SIZE
+            #client_socket.sendall(END_MARKER.encode())  # TCP Send end marker to indicate end of message
+            client_socket.sendto(END_MARKER.encode(), (host, port))  # UDP
+        
         if DEBUGGER_SERVER:
             for i in DEBUGGER_SERVER:
                 if ":" in i:
@@ -742,6 +790,73 @@ class debugger(object):
                         port = int(i)
                     else:
                         host = i.strip()
+                        port = port or 50001
+                        
+                if host == '0.0.0.0': host = '127.0.0.1'
+                if host:
+                    server_host = host
+                
+                if os.getenv('DEBUG_EXTRA') == '1': print("server_host:", host)
+                if os.getenv('DEBUG_EXTRA') == '1': print("port:", port)
+                
+                #client_socket.connect((server_host, port)) #TCP
+                
+                try:
+                    if hasattr(msg, 'decode') and sys.version_info.major == 2:
+                        msg = msg.encode('utf-8')
+                        send_message(msg, client_socket)
+                    else:
+                        if not hasattr(msg, 'decode'):
+                            #send_message(bytes(msg.encode('utf-8')), client_socket) #TCP
+                            send_message(bytes(msg.encode('utf-8')), client_socket, host, port)
+                        else:
+                            #send_message(msg, client_socket) #TCP
+                            send_message(msg, client_socket, host, port)
+                except:
+                    print(traceback.format_exc())
+        else:
+            if self.CONFIG.get_config('DEBUGGER', 'HOST'):
+                if ":" in self.CONFIG.get_config('DEBUGGER', 'HOST'):
+                    host, port = str(self.CONFIG.get_config('DEBUGGER', 'HOST')).strip().split(":")
+                    port = int(port.strip())
+                    host = host.strip()
+                else:
+                    host = self.CONFIG.get_config('DEBUGGER', 'HOST').strip()
+                #client_socket.connect((host, port)) #TCP
+                #send_message(msg, client_socket) #TCP
+                send_message(msg, client_socket, host, port)
+        
+        client_socket.close()        
+        
+    def debug_server_client1(self, msg, server_host = '127.0.0.1', port = None):
+        
+        #print("PORT 2:", port)
+        #print("DEBUGGER_SERVER 2:", DEBUGGER_SERVER)
+        
+        DEBUGGER_SERVER = self.check_debugger_server(server_host, port)
+        
+        #if isinstance(DEBUGGER_SERVER, list) and str(DEBUGGER_SERVER[0]).isdigit() and port:
+            #DEBUGGER_SERVER = [str(port)]
+        #else:
+        port = port or 50001
+        
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        if DEBUGGER_SERVER:
+            for i in DEBUGGER_SERVER:
+                #print("i:", i)
+                if ":" in i:
+                    host, port = str(i).strip().split(":")
+                    port = int(port.strip())
+                    host = host.strip()
+                    if not host: host = '127.0.0.1'
+                else:
+                    if str(i).isdigit():
+                        host = '127.0.0.1'
+                        port = int(i)
+                    else:
+                        host = i.strip()
+                        port = port or 50001
                         
                 if host == '0.0.0.0': host = '127.0.0.1'
                 
@@ -835,6 +950,7 @@ class debugger(object):
         cls = False
         formatlist = ''
         if DEBUG_SERVER: debug_server = True
+        #print(f"DEBUG_SERVER: {DEBUG_SERVER}")
         if not filename: filename = self.FILENAME
 
         frame = inspect.currentframe()
@@ -1118,7 +1234,131 @@ def get_config(section, option, configname = 'debug.ini', value = ''):
         data = cfg.get(section, option)
     return data    
 
+def get_max_width():
+    if sys.version_info.major == 3 or not sys.platform == 'win32':
+        MAX_WIDTH = shutil.get_terminal_size()[0]
+    else:
+        MAX_WIDTH = cmdw.getWidth()
+    return MAX_WIDTH
+
 def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
+    global DEBUGGER_SERVER
+    BUFFER_SIZE = CONFIG.get_config('buffer', 'size', '1024')  # Adjust as needed
+    END_MARKER = '<END>'    
+    
+    if os.getenv('DEBUG_EXTRA') == '1': print("host [1]:", host)
+    if os.getenv('DEBUG_EXTRA') == '1': print("port [1]:", port)
+    
+    on_top = CONFIG.get_config('display', 'on_top') or on_top
+    if on_top: set_detach(center = center, on_top = on_top)
+    host1 = ''
+    port1 = ''
+    DEBUGGER_SERVER = debugger.check_debugger_server(host, port) or DEBUGGER_SERVER
+    if os.getenv('DEBUG_EXTRA') == '1': print("DEBUGGER_SERVER:", DEBUGGER_SERVER)
+    if DEBUGGER_SERVER:
+        if isinstance(DEBUGGER_SERVER, list):
+            for i in DEBUGGER_SERVER:
+                if ":" in i:
+                    host1, port1 = str(i).split(":")
+                    port1 = int(port1)
+                    if not host1: host1 = '127.0.0.1'
+                    if os.getenv('DEBUG_EXTRA') == '1': print("host [2]:", host1)
+                    if os.getenv('DEBUG_EXTRA') == '1': print("port [2]:", port1)                    
+                else:
+                    if str(i).isdigit():
+                        port1 = int(i)
+                    else:
+                        host1 = i
+                    if os.getenv('DEBUG_EXTRA') == '1': print("host [3]:", host1)
+                    if os.getenv('DEBUG_EXTRA') == '1': print("port [3]:", port1)                    
+        else:
+            if ":" in DEBUGGER_SERVER:
+                host1, port1 = str(DEBUGGER_SERVER).split(":")
+                port1 = int(port1)
+                if not host1: host1 = '127.0.0.1'
+                if os.getenv('DEBUG_EXTRA') == '1': print("host [4]:", host1)
+                if os.getenv('DEBUG_EXTRA') == '1': print("port [4]:", port1)                
+            else:
+                if str(DEBUGGER_SERVER).isdigit():
+                    port1 = int(i)
+                else:
+                    host1 = DEBUGGER_SERVER
+                if os.getenv('DEBUG_EXTRA') == '1': print("host [5]:", host1)
+                if os.getenv('DEBUG_EXTRA') == '1': print("port [5]:", port1)                
+    if host == '0.0.0.0': host = '127.0.0.1'
+    if not port:
+        port = 50001
+    if not isinstance(port, str) and str(port).isdigit():
+        port = int(port)
+    
+    if os.getenv('DEBUG_EXTRA') == '1': print("host [6]:", host)
+    if os.getenv('DEBUG_EXTRA') == '1': print("port [6]:", port)
+        
+    host = host1 or host or CONFIG.get_config('DEBUGGER', 'HOST')
+    port = port1 or port or CONFIG.get_config('DEBUGGER', 'PORT')
+    
+    if os.getenv('DEBUG_EXTRA') == '1': print("host [7]:", host)
+    if os.getenv('DEBUG_EXTRA') == '1': print("port [7]:", port)
+    
+    if host == '0.0.0.0': host = '127.0.0.1'
+    
+    def receive_message(server_socket):
+        full_message = ''
+        while True:
+            #chunk = server_socket.recv(BUFFER_SIZE).decode() #TCP
+            chunk, _ = server_socket.recvfrom(BUFFER_SIZE) #UDP
+            
+            if END_MARKER.encode() in chunk:
+                full_message += chunk.decode().replace(END_MARKER, '')
+                break
+            full_message += chunk.decode()
+        return full_message
+    
+    #server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP
+    #server_socket.bind((host, port)) #TCP
+    #server_socket.listen(1) #TCP
+    
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server_socket.bind((host, port))    
+    
+    print(make_colors("BIND: ", 'white', 'green') + make_colors(host, 'white', 'red', attrs= ['bold']) + ":" + make_colors(str(port), 'black', 'yellow', attrs= ['bold']))
+    try:
+        while True:
+            #client_socket, client_address = server_socket.accept() #TCP
+            #print(f"Connected to {client_address}")
+            
+            #msg = receive_message(client_socket) #TCP
+            msg = receive_message(server_socket)
+            
+            #print(f"Received msg: {msg}")
+            #print(msg)
+            if msg:
+                if CONFIG.get_config('display', 'on_top') == 1 or CONFIG.get_config('display', 'on_top') == True:
+                    showme()
+                    
+                if hasattr(msg, 'decode') and sys.version_info.major == 2:
+                    msg = msg.decode('utf-8')
+                    
+                if msg == 'cls' or msg == 'clear':
+                    if sys.platform == 'win32':
+                        os.system('cls')
+                    else:
+                        os.system('clear')
+                else:
+                    print(msg)
+                    
+                if sys.platform == 'win32':
+                    print("=" * (get_max_width() - 3))
+                else:
+                    print("=" * ((get_max_width() * 2) - 3))            
+    
+            #server_socket.close() #TCP
+            
+    except KeyboardInterrupt:
+        print(make_colors("server shutdown ...", 'lw', 'lr'))
+        os.kill(os.getpid(), signal.SIGTERM)
+        
+def serve1(host = '0.0.0.0', port = 50001, on_top=False, center = False):
     on_top = CONFIG.get_config('display', 'on_top') or on_top
     if on_top: set_detach(center = center, on_top = on_top)
     host1 = ''
@@ -1196,30 +1436,77 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
     except KeyboardInterrupt:
         os.kill(os.getpid(), signal.SIGTERM)
 
+def check_debug():
+    DEBUG = os.getenv('DEBUG')
+    DEBUG_SERVER = os.getenv("DEBUG_SERVER")
+    DEBUGGER_SERVER = os.getenv("DEBUGGER_SERVER")
+        
+    if DEBUG == 1 or DEBUG == '1': DEBUG = True
+    elif DEBUG == 0 or DEBUG == '0': DEBUG = False
+    
+    if os.getenv('DEBUG') == 1 or os.getenv('DEBUG') == '1': DEBUG = True
+    if os.getenv('DEBUG') == 0 or os.getenv('DEBUG') == '0': DEBUG = False
+    
+    if isinstance(DEBUG, str):
+        if not DEBUG.isdigit() and DEBUG.lower() in ['true', 'false']:
+            DEBUG = bool(DEBUG.title())
+    
+    DEBUG_SERVER = os.getenv('DEBUG_SERVER')
+    
+    if DEBUG_SERVER == 1 or DEBUG_SERVER == '1': DEBUG_SERVER = True
+    if DEBUG_SERVER == 0 or DEBUG_SERVER == '0': DEBUG_SERVER = False
+    if DEBUG_SERVER == "True": DEBUG_SERVER = True
+    if DEBUG_SERVER == "False": DEBUG_SERVER = False
+    
+    DEBUGGER_SERVER = ['127.0.0.1:50001']
+    
+    if os.getenv('DEBUGGER_SERVER'):
+        if ";" in os.getenv('DEBUGGER_SERVER'):
+            DEBUGGER_SERVER = os.getenv('DEBUGGER_SERVER').strip().split(";")
+        elif os.getenv('DEBUGGER_SERVER').isdigit():
+            DEBUGGER_SERVER = ['127.0.0.1:' + os.getenv('DEBUGGER_SERVER')]
+        else:
+            DEBUGGER_SERVER = [os.getenv('DEBUGGER_SERVER')]
+    
+    
+    FILENAME = ''
+    if os.getenv('DEBUG_FILENAME'): FILENAME = os.getenv('DEBUG_FILENAME')
+    
+    return DEBUG, DEBUG_SERVER, DEBUGGER_SERVER
+    
 def debug(defname = None, debug = None, debug_server = False, line_number = '', tag = 'debug', print_function_parameters = False, **kwargs):
-        tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
-        
-        #if not defname:
-            #print "inspect.stack =", inspect.stack()[1][2]
-        #    defname = inspect.stack()[1][3]
-        #print("inspect.stack() =", inspect.stack())
-        #print("inspect.stack()[1][2] =", inspect.stack()[1][2])
-        #print("inspect.stack()[1][2] =", type(inspect.stack()[1][2]))
-        line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite') + "] "
-        #print("line_number =", line_number)
-        #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
-        msg = ''
-        if debug or DEBUG or os.getenv('DEBUG') == '1':
+    global DEBUG
+    global DEBUG_SERVER
+    global DEBUGGER_SERVER
+    
+    tag = os.getenv('DEBUG_TAG') or os.getenv('DEBUG_APP') or CONFIG.get_config('DEBUG', 'tag') or CONFIG.get_config('app', 'name') or tag or 'debug'
+    
+    #if not defname:
+        #print "inspect.stack =", inspect.stack()[1][2]
+    #    defname = inspect.stack()[1][3]
+    #print("inspect.stack() =", inspect.stack())
+    #print("inspect.stack()[1][2] =", inspect.stack()[1][2])
+    #print("inspect.stack()[1][2] =", type(inspect.stack()[1][2]))
+    line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite') + "] "
+    #print("line_number =", line_number)
+    #defname = str(inspect.stack()[1][3]) + " [" + str(inspect.stack()[1][2]) + "] "
+    msg = ''
+
+    #if any('debug' in i.lower() for i in  os.environ):
+    #print("debug: ", debug)
+    #print("DEBUG: ", DEBUG)
+    #print("check_debug() :", check_debug())
+    if DEBUG or debug or check_debug()[0] or check_debug()[1] or check_debug()[2]:
+        c = debugger(defname, debug)
+        msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
+    
+    if CONFIG.get_config('database', 'active') == 1 or CONFIG.get_config('database', 'active') == True:
+        if not msg:
             c = debugger(defname, debug)
-            msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
-        
-        if CONFIG.get_config('database', 'active') == 1 or CONFIG.get_config('database', 'active') == True:
-            if not msg:
-                c = debugger(defname, debug)
-                msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)        
-            c.insert_db(msg, tag)
-        
-        return msg
+            msg = c.printlist(defname, debug, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)        
+        c.insert_db(msg, tag)
+    
+    return msg
 
 def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer_column = 9000, buffer_row = 77, on_top = True):
     if not sys.platform == 'win32':
