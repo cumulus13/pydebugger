@@ -61,7 +61,8 @@ You can also run the debug server on a specific port number:
 $ debug.py 50005
 ```
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/XWL72_oLnJ4?autoplay=1&mute=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+[![Video Example](https://img.youtube.com/vi/XWL72_oLnJ4/0.jpg)](https://www.youtube.com/watch?v=XWL72_oLnJ4)
+
 
 Support
 --------
