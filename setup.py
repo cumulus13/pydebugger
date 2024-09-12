@@ -10,7 +10,7 @@ except:
     pass
 shutil.copy2('__version__.py', 'pydebugger')
 
-with io.open("README.rst", "rt", encoding="utf8") as f:
+with io.open("README.md", "rt", encoding="utf8") as f:
     readme = f.read()
 
 # with io.open("__version__.py", "rt", encoding="utf8") as f:
@@ -31,11 +31,11 @@ setup(
     author_email="cumulus13@gmail.com",
     maintainer="cumulus13 Team",
     maintainer_email="cumulus13@gmail.com",
-    description="print objects with colored with more info",
+    description="Print objects with inspection details and color.",
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=["pydebugger"],
-    data_files=['__version__.py', 'README.rst', 'LICENSE.rst'],
+    data_files=['__version__.py', 'README.md', 'LICENSE.md'],
     package_data = {
        '': ['*.txt', '*.ini', '*.rst', '*.py'] 
     },     
@@ -60,12 +60,7 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
     ],
 )
