@@ -21,7 +21,7 @@ pydebugger supports Python 2 and newer, Python 3 and newer, and PyPy.
 What does it look like? Here is an example of a simple pydebugger program:
 
 ```python:
-    # hello.pyt
+    # hello.py
 
     from pydebugger.debug import debug
     
