@@ -1,6 +1,6 @@
 # pydebugger
 
-print objects stack info with colored.
+Print objects with inspection details and color.
 
 
 ## Installing
@@ -21,7 +21,7 @@ pydebugger supports Python 2 and newer, Python 3 and newer, and PyPy.
 What does it look like? Here is an example of a simple pydebugger program:
 
 ```python:
-    # hello.py
+    # hello.pytra
 
     from pydebugger.debug import debug
     
@@ -36,7 +36,7 @@ And what does it look like when it's run and printed in color:
     2024:09:12~18:21:45:822673 C:\TEMP\hello.py -> variable1: data1 -> TYPE:<class 'str'> -> LEN:5 -> [C:\TEMP\hello.py] [3] PID:21428
 ```
 
-You can set OS Environment DEBUG=1 or DEBUG=True to avoid parameter "debug=1" or "debug=True"
+You can set OS Environment variable DEBUG=1 or DEBUG=True to avoid having to use the parameter "debug=1" or "debug=True"
 
 ```python:
 
@@ -45,7 +45,7 @@ You can set OS Environment DEBUG=1 or DEBUG=True to avoid parameter "debug=1" or
     debug(variable1="data1")
 ```
 
-or you just run "debug.py" to provider debug server with Client support OS Environment
+you can run "debug.py" to provide a debug server with client support using environment variables:
 
 ```bash:
     # on terminal 
@@ -54,12 +54,14 @@ or you just run "debug.py" to provider debug server with Client support OS Envir
 	export DEBUGGER_SERVER=127.0.0.1:50001
     # then run hello.py
 ```
-this will send all of info to debug server run on '127.0.0.1' with port 50001
+this will send all info to debug server running on '127.0.0.1' on port 50001
 
-or you can run debug server on spesific port number
+You can also run the debug server on a specific port number:
 ```bash
 $ debug.py 50005
 ```
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/XWL72_oLnJ4?autoplay=1&mute=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
 Support
 --------
