@@ -35,5 +35,4 @@ SUCH DAMAGE.
 pydebugger uses parts of optparse written by Hadi Cahyadi, LD. Ward and maintained
 by the Python Software Foundation.
 
-Copyright © 2017-2019 Hadi Cahyadi, LD. All rights reserved.
-Copyright © 2002-2006 Python Software Foundation. All rights reserved.
+Copyright © 2019-2024 Hadi Cahyadi, LD. All rights reserved.
