@@ -1117,7 +1117,7 @@ class debugger(object):
                 except:
                     print("TRACEBACK =", traceback.format_exc())
 
-        if DEBUG_SERVER or debug:
+        if DEBUG_SERVER:# or debug:
             # self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
             if cls: formatlist = 'cls'
             
@@ -1480,6 +1480,8 @@ def check_debug():
     return DEBUG, DEBUG_SERVER, DEBUGGER_SERVER
     
 def debug(defname = None, debug = None, debug_server = False, line_number = '', tag = 'debug', print_function_parameters = False, **kwargs):
+    if not debug and not os.getenv('DEBUG') and not os.getenv('DEBUG_SERVER') and not os.getenv('DEBUGGER_SERVER'):
+        return None
     global DEBUG
     global DEBUG_SERVER
     global DEBUGGER_SERVER
