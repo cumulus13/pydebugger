@@ -1059,12 +1059,12 @@ class debugger(object):
                 formatlist = datetime.datetime.strftime(datetime.datetime.now(), '%Y:%m:%d~%H:%M:%S:%f') + " " + defname + arrow + formatlist + " " + "[" + str(filename) + "]" + " "  + "[" + str(linenumbers)[2:-2] + "]"
         else:
             defname = str(inspect.stack()[2][3])
-            if defname == "<module>":
-                defname = sys.argv[0]
+            if defname == "<module>": defname = sys.argv[0]
             try:
                 the_class = re.split("'|>|<|\.", str(inspect.stack()[1][0].f_locals.get('self').__class__))[-3]
             except:
                 pass
+            
             if len(inspect.stack()) > 2:
                 for h in inspect.stack()[3:]:
                     if isinstance(h[2], int):
@@ -1075,7 +1075,6 @@ class debugger(object):
             if the_class and not the_class == "NoneType":
 
                 defname_parent += "(%s)" % (make_colors(the_class, 'lightwhite', 'blue')) + arrow
-                
                 defname_parent1 += "(%s)" % (the_class) + arrow
             
             if not linenumbers:
