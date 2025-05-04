@@ -853,17 +853,17 @@ class debugger(object):
                     if isinstance(h[2], int):
                         if not h[3] == '<module>':
                             defname_parent1 += "[%s]" % (h[3]) + arrow
-                            defname_parent += "%s" % (make_colors(h[3], 'lc')) + "[%s]" % (make_colors(str(h[2]), 'lightwhite', 'lightred')) + arrow
+                            defname_parent += "%s" % (make_colors(h[3], 'lc')) + "[%s]" % (make_colors(str(h[2]), 'lw', 'lr')) + arrow
                 #defname_parent = inspect.stack()[1][3]
             if the_class and not the_class == "NoneType":
 
-                defname_parent += "(%s)" % (make_colors(the_class, 'lightwhite', 'blue')) + arrow
+                defname_parent += "(%s)" % (make_colors(the_class, 'lw', 'bl')) + arrow
                 defname_parent1 += "(%s)" % (the_class) + arrow
             
             if not linenumbers:
                 try:
                     #line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + " " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
-                    line_number = " " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
+                    line_number = " " + make_colors("PID:", 'red', 'lg') + make_colors(str(PID), 'lw')
                 except:
                     self.track()
                     line_number =  " [" + str(inspect.stack()[1][2]) + "] "
