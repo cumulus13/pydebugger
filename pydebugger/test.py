@@ -1,5 +1,5 @@
 import os
-os.environ.update({'DEBUG_SERVER':'1'})
+# os.environ.update({'DEBUG_SERVER':'1'})
 from debug import debug, debug2, debug3, debug4
 
 debug(TEST_debug = "TEST")
