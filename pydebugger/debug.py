@@ -1151,6 +1151,69 @@ def debug3(defname = None, debug = None, host = None, port = None, line_number =
         # return debug1(defname, debug, host, port, line_number, tag, print_function_parameters, **kwargs)
     return 
 
+def make_debug_func(idx):
+    def debug_func(defname=None, debug=None, host=None, port=None, line_number=None, tag='debug', print_function_parameters=False, **kwargs):
+        env_name = f'DEBUGGER_SERVER{idx}'
+        host_name = f'DEBUG_HOST{idx}'
+        port_name = f'DEBUG_PORT{idx}'
+        global_vars = globals()
+        # Ambil host dan port default
+        host_val = CONFIG.get_config(f'debug{idx}', 'host') or kwargs.get('host') or os.getenv(f'DEBUG{idx}_HOST') or global_vars.get(host_name, '127.0.0.1')
+        port_val = CONFIG.get_config(f'debug{idx}', 'port') or kwargs.get('port') or os.getenv(f'DEBUG{idx}_PORT') or global_vars.get(port_name, 50000 + idx)
+        # Ambil server list dari env
+        server_list = []
+        env_val = os.getenv(env_name)
+        if env_val:
+            env_val = env_val.strip()
+            if ";" in env_val or "," in env_val:
+                sep = ";" if ";" in env_val else ","
+                items = [item.strip() for item in env_val.split(sep) if item.strip()]
+                for item in items:
+                    if ":" in item:
+                        h, p = item.split(":")
+                        h = h or host_val
+                        p = int(p or port_val)
+                        server_list.append(f"{h}:{p}")
+                    elif item.isdigit():
+                        server_list.append(f"{host_val}:{item}")
+                    else:
+                        server_list.append(item)
+            elif ":" in env_val:
+                h, p = env_val.split(":")
+                h = h or host_val
+                p = int(p or port_val)
+                server_list = [f"{h}:{p}"]
+            elif env_val.isdigit():
+                server_list = [f"{host_val}:{env_val}"]
+            else:
+                server_list = [env_val]
+        else:
+            server_list = [f"{host_val}:{port_val}"]
+
+        # Cek trigger debug
+        _debug_ = kwargs.get('debug') or debug or DEBUG or '0'
+        if (str(_debug_).isdigit() and str(_debug_) == str(idx)) or DEBUG_SERVER:
+            for ds in server_list:
+                if ":" in ds:
+                    h, p = ds.split(":")
+                    h = h or host_val
+                    p = int(p or port_val)
+                elif str(ds).isdigit():
+                    h = host_val
+                    p = int(ds)
+                else:
+                    h = ds.strip()
+                    p = port_val
+                # print(f"host{idx}: {h}")
+                # print(f"port{idx}: {p}")
+                debug1(defname, debug, h, p, line_number, tag, print_function_parameters, **kwargs)
+        return
+    return debug_func
+
+# Daftarkan fungsi debug4 sampai debug10 secara otomatis
+for i in range(4, 11):
+    globals()[f'debug{i}'] = make_debug_func(i)
+
 def usage():
     if not __name__ == '__main__':
         global HANDLE
