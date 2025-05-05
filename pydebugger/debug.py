@@ -65,46 +65,39 @@ else:
 
 DEBUG = False
 if DEBUG in ['1', 'true', 'True', 1]: DEBUG = True
-# elif not DEBUG or DEBUG in ['0', 'false', 'False', 0]: DEBUG = False
-
 if os.getenv('DEBUG') and os.getenv('DEBUG') in ['1', 'true', 'True', 1]: DEBUG = True
-# elif not os.getenv('DEBUG') or os.getenv('DEBUG') in ['0', 'false', 'False', 1] : DEBUG = False
 
 ##########################################################################################################################################
 DEBUG_SERVER = False
 if DEBUG_SERVER in ['1', 'true', 'True', 1]: DEBUG_SERVER = True
-# elif not DEBUG_SERVER or DEBUG_SERVER in ['0', 'false', 'False', 0]: DEBUG_SERVER = False
 
 if os.getenv('DEBUG_SERVER') and os.getenv('DEBUG_SERVER') in ['1', 'true', 'True', 1]: DEBUG_SERVER = True
-# elif not os.getenv('DEBUG_SERVER') or os.getenv('DEBUG_SERVER') in ['0', 'false', 'False', 1] : DEBUG_SERVER = False
-# print(f"os.getenv('DEBUG_SERVER'): {os.getenv('DEBUG_SERVER')}")
-# print(f"DEBUG_SERVER: {DEBUG_SERVER}")
 
 ##########################################################################################################################################
 DEBUG_PORT = 50001
-if os.getenv('DEBUG_PORT') and os.getenv('DEBUG_PORT') in ['1', 'true', 'True', 1]: DEBUG_PORT = True
-# elif not os.getenv('DEBUG_PORT') or os.getenv('DEBUG_PORT') in ['0', 'false', 'False', 1] : DEBUG_PORT = False
+DEBUG_PORT = os.getenv('DEBUG_PORT') or DEBUG_PORT
 
 DEBUG_PORT2 = 50002
-if os.getenv('DEBUG_PORT2') and os.getenv('DEBUG_PORT2') in ['1', 'true', 'True', 1]: DEBUG_PORT2 = True
-# elif not os.getenv('DEBUG_PORT2') or os.getenv('DEBUG_PORT2') in ['0', 'false', 'False', 1] : DEBUG_PORT2 = False
+DEBUG_PORT2 = os.getenv('DEBUG_PORT2') or DEBUG_PORT2
 
 DEBUG_PORT3 = 50003
-if os.getenv('DEBUG_PORT3') and os.getenv('DEBUG_PORT3') in ['1', 'true', 'True', 1]: DEBUG_PORT3 = True
-# elif not os.getenv('DEBUG_PORT3') or os.getenv('DEBUG_PORT3') in ['0', 'false', 'False', 1] : DEBUG_PORT3 = False
+DEBUG_PORT3 = os.getenv('DEBUG_PORT3') or DEBUG_PORT3
+
+DEBUG_PORT4 = 50004
+DEBUG_PORT4 = os.getenv('DEBUG_PORT3') or DEBUG_PORT4
 
 ##########################################################################################################################################
 DEBUG_HOST = '127.0.0.1'
-if os.getenv('DEBUG_HOST') and os.getenv('DEBUG_HOST') in ['1', 'true', 'True', 1]: DEBUG_HOST = True
-# elif not os.getenv('DEBUG_HOST') or os.getenv('DEBUG_HOST') in ['0', 'false', 'False', 1] : DEBUG_HOST = False
+DEBUG_HOST = os.getenv('DEBUG_HOST') or DEBUG_HOST
 
-DEBUG_HOST2 = '127.0.0.1'
-if os.getenv('DEBUG_HOST2') and os.getenv('DEBUG_HOST2') in ['1', 'true', 'True', 1]: DEBUG_HOST2 = True
-# elif not os.getenv('DEBUG_HOST2') or os.getenv('DEBUG_HOST2') in ['0', 'false', 'False', 1] : DEBUG_HOST2 = False
+DEBUG_HOST2 = ''
+DEBUG_HOST2 = os.getenv('DEBUG_HOST2') or DEBUG_HOST2
 
-DEBUG_HOST3 = '127.0.0.1'
-if os.getenv('DEBUG_HOST3') and os.getenv('DEBUG_HOST3') in ['1', 'true', 'True', 1]: DEBUG_HOST3 = True
-# elif not os.getenv('DEBUG_HOST3') or os.getenv('DEBUG_HOST3') in ['0', 'false', 'False', 1] : DEBUG_HOST3 = False
+DEBUG_HOST3 = ''
+DEBUG_HOST3 = os.getenv('DEBUG_HOST3') or DEBUG_HOST3
+
+DEBUG_HOST4 = ''
+DEBUG_HOST4 = os.getenv('DEBUG_HOST4') or DEBUG_HOST4
 
 ##########################################################################################################################################
 DEBUGGER_SERVER = [f'{DEBUG_HOST or "127.0.0.1"}:{DEBUG_PORT or 50001}']
@@ -493,7 +486,7 @@ def cleanup(filename):
             data = f.readlines()
     datax = ""
     for i in data:
-        if not re.findall('debug\(.*?\).*?\n', i):
+        if not re.findall(r'debug\\(.*?\\).*?\\n', i):
             datax += i
     
     if len(file_ext) == 2:
@@ -844,7 +837,7 @@ class debugger(object):
             defname = str(inspect.stack()[2][3])
             if defname == "<module>": defname = sys.argv[0]
             try:
-                the_class = re.split("'|>|<|\.", str(inspect.stack()[1][0].f_locals.get('self').__class__))[-3]
+                the_class = re.split(f"'|>|<|\\.", str(inspect.stack()[1][0].f_locals.get('self').__class__))[-3]
             except:
                 pass
             
@@ -853,17 +846,17 @@ class debugger(object):
                     if isinstance(h[2], int):
                         if not h[3] == '<module>':
                             defname_parent1 += "[%s]" % (h[3]) + arrow
-                            defname_parent += "%s" % (make_colors(h[3], 'lc')) + "[%s]" % (make_colors(str(h[2]), 'lw', 'lr')) + arrow
+                            defname_parent += "%s" % (make_colors(h[3], 'lc')) + "[%s]" % (make_colors(str(h[2]), 'lightwhite', 'lightred')) + arrow
                 #defname_parent = inspect.stack()[1][3]
             if the_class and not the_class == "NoneType":
 
-                defname_parent += "(%s)" % (make_colors(the_class, 'lw', 'bl')) + arrow
+                defname_parent += "(%s)" % (make_colors(the_class, 'lightwhite', 'blue')) + arrow
                 defname_parent1 += "(%s)" % (the_class) + arrow
             
             if not linenumbers:
                 try:
                     #line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'white', 'on_cyan') + "] " + " " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
-                    line_number = " " + make_colors("PID:", 'red', 'lg') + make_colors(str(PID), 'lw')
+                    line_number = " " + make_colors("PID:", 'red', 'lightgreen') + make_colors(str(PID), 'lightwhite')
                 except:
                     self.track()
                     line_number =  " [" + str(inspect.stack()[1][2]) + "] "
@@ -1022,17 +1015,24 @@ def debug1(*args, **kwargs):
 
 def debug2(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, **kwargs):
     global DEBUGGER_SERVER2
-    
+    # print(f"DEBUGGER_SERVER: {DEBUGGER_SERVER}")
     sig = inspect.signature(debug1)
     bound_args = sig.bind_partial(defname, debug, host, port, line_number, tag, print_function_parameters, **kwargs)
     _debug_ = bound_args.arguments.get('debug', None) or kwargs.get('debug') or DEBUG or '0'
-    host = CONFIG.get_config('debug2', 'host') or kwargs.get('host') or os.getenv('DEBUG2_HOST') or DEBUG_HOST2
-    port = CONFIG.get_config('debug2', 'port') or kwargs.get('port') or os.getenv('DEBUG2_PORT') or DEBUG_PORT2
+    host = CONFIG.get_config('debug2', 'host') or kwargs.get('host') or os.getenv('DEBUG2_HOST') or DEBUG_HOST2 or DEBUGGER_SERVER[0].split(":")[0] or DEBUG_HOST or '127.0.0.1'
+    port = CONFIG.get_config('debug2', 'port') or kwargs.get('port') or os.getenv('DEBUG2_PORT') or DEBUG_PORT2 or DEBUGGER_SERVER[0].split(":")[1] or DEBUG_PORT or 50001
     
     # print(f"DEBUG_HOST2: {DEBUG_HOST2}")
     # print(f"host2 [1]: {host}")
     # print(f"port2 [1]: {port}")
 
+    if DEBUGGER_SERVER2 and isinstance(DEBUGGER_SERVER2, list):
+        for item in DEBUGGER_SERVER2:
+            if ":" in item:
+                host, port = item.split(":")
+                host = host or host
+                port = int(port or port)
+            
     if os.getenv('DEBUGGER_SERVER2'):
         env_val = os.getenv('DEBUGGER_SERVER2').strip()
         if ";" in env_val or "," in env_val:
@@ -1061,6 +1061,8 @@ def debug2(defname = None, debug = None, host = None, port = None, line_number =
     if (DEBUG_HOST2 or DEBUG_PORT2) and not DEBUGGER_SERVER2:
         DEBUGGER_SERVER2 = [f"{DEBUG_HOST2}:{DEBUG_PORT2}"]
     
+    # print(f"host2 [2]: {host}")
+    # print(f"port2 [2]: {port}")
     # print(f"kwargs [2]: {kwargs}")
     # print(f"_debug_: {_debug_}")
     # print(f"DEBUG_SERVER: {DEBUG_SERVER}")
@@ -1269,7 +1271,6 @@ if __name__ == '__main__':
         kernel32 = ctypes.WinDLL('kernel32')
         handle2 = ctypes.windll.user32.GetForegroundWindow()
         HANDLE = handle2
-    print("PID:", PID)
-    if sys.platform == 'win32':
         print("HANDLE:", HANDLE)
+    print("PID:", PID)
     usage()
