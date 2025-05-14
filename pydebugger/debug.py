@@ -104,6 +104,9 @@ DEBUGGER_SERVER = [f'{DEBUG_HOST or "127.0.0.1"}:{DEBUG_PORT or 50001}']
 DEBUGGER_SERVER2 = []
 DEBUGGER_SERVER3 = []
 
+# print(f'os.getenv("DEBUG") [XX]: {os.getenv("DEBUG")}')
+# print(f'DEBUG [XX]: {DEBUG}')
+
 if os.getenv('DEBUGGER_SERVER'):
     env_val = os.getenv('DEBUGGER_SERVER').strip()
     if ";" in env_val or "," in env_val:
@@ -144,6 +147,9 @@ except:
         VERSION = 'UNKNOWN'
 
 force = False
+
+# print(f'os.getenv("DEBUG") [XXX]: {os.getenv("DEBUG")}')
+# print(f'DEBUG [XXX]: {DEBUG}')
 
 def debug_server_client(msg, host = '127.0.0.1', port = 50001):
     RECEIVER_HOST = CONFIG.get_config_as_list('RECEIVER', 'HOST') or host
@@ -536,7 +542,10 @@ class debugger(object):
     def __init__(self, defname = None, debug = None, FILENAME = None, **kwargs):
         global DEBUG
         super(debugger, self)
-        DEBUG = debug or DEBUG
+        # print(f'os.getenv("DEBUG") [00]: {os.getenv("DEBUG")}')
+        # print(f'debug [00]: {debug}')
+        # print(f'DEBUG [00]: {DEBUG}')
+        # DEBUG = debug or DEBUG
         self.FILENAME = FILENAME or os.getenv("DEBUG_FILENAME")
     
     @classmethod    
@@ -688,12 +697,10 @@ class debugger(object):
 
     @classmethod
     def track(self, check = False):
-        if not check:
-            if CONFIG.get_config('DEBUG', 'debug') == 1 or os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
-                traceback.format_exc()
-        else:
-            if CONFIG.get_config('DEBUG', 'debug') == 1: #or os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
-                return True
+        if not check and CONFIG.get_config('DEBUG', 'debug') == 1 or os.getenv('DEBUG') or os.getenv('DEBUG_SERVER'):
+            traceback.format_exc()
+        elif CONFIG.get_config('DEBUG', 'debug') == 1:
+            return True
         return False
 
     @classmethod
@@ -725,7 +732,12 @@ class debugger(object):
     
     @classmethod
     def printlist(self, defname = None, debug = None, host = None, port = None, FILENAME = '', linenumbers = '', print_function_parameters = False, **kwargs):
+        
         # print(f"KWARGS: {kwargs}")
+        
+        # print(f'os.getenv("DEBUG") [0]: {os.getenv("DEBUG")}')
+        # print(f'debug [0]: {debug}')
+        # print(f'DEBUG [0]: {DEBUG}')
         
         force = os.getenv('MAKE_COLORS_FORCE') or CONFIG.get_config('make_colors', 'force') == 1 or CONFIG.get_config('make_colors', 'force') == True
         
@@ -883,6 +895,10 @@ class debugger(object):
                 pass
         else:
             if os.getenv("DEBUG") == '1' or debug or DEBUG == '1' or DEBUG == True or DEBUG == 1:
+                # print(f'os.getenv("DEBUG"): {os.getenv("DEBUG")}')
+                # print(f'debug: {debug}')
+                # print(f'DEBUG: {DEBUG}')
+                
                 try:
                     if not formatlist == 'cls':
                         if sys.version_info.major == 2:
@@ -960,6 +976,9 @@ class debugger(object):
             sys.exit(0)
             
 def debug(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, **kwargs):
+    # print(f'os.getenv("DEBUG") [YY]: {os.getenv("DEBUG")}')
+    # print(f'debug [YY]: {debug}')
+    # print(f'DEBUG [YY]: {DEBUG}')
     # global DEBUG
     # global DEBUG_SERVER
     # global DEBUGGER_SERVER
@@ -999,6 +1018,10 @@ def debug(defname = None, debug = None, host = None, port = None, line_number = 
     msg = ''
 
     if DEBUG or debug or DEBUG_SERVER:
+        # print(f'os.getenv("DEBUG") [ZZ]: {os.getenv("DEBUG")}')
+        # print(f'debug [ZZ]: {debug}')
+        # print(f'DEBUG [ZZ]: {DEBUG}')
+        
         c = debugger(defname, debug)
         msg = c.printlist(defname, debug, host, port, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
     
