@@ -64,9 +64,12 @@ else:
     MAX_WIDTH = cmdw.getWidth()
 
 DEBUG = False
-if DEBUG in ['1', 'true', 'True', 1]: DEBUG = True
-if os.getenv('DEBUG') and os.getenv('DEBUG') in ['1', 'true', 'True', 1]: DEBUG = True
 
+if os.getenv('DEBUG') and os.getenv('DEBUG') in ['1', 'true', 'True', 1]:
+    DEBUG = True
+elif DEBUG in ['1', 'true', 'True', 1]:
+    DEBUG = True
+    os.environ.update({'DEBUG':'1'})
 ##########################################################################################################################################
 DEBUG_SERVER = False
 if DEBUG_SERVER in ['1', 'true', 'True', 1]: DEBUG_SERVER = True
@@ -894,7 +897,7 @@ class debugger(object):
             except:
                 pass
         else:
-            if os.getenv("DEBUG") == '1' or debug or DEBUG == '1' or DEBUG == True or DEBUG == 1:
+            if (os.getenv('DEBUG') and os.getenv('DEBUG') in [1, '1', 'true', 'True']) or debug:
                 # print(f'os.getenv("DEBUG"): {os.getenv("DEBUG")}')
                 # print(f'debug: {debug}')
                 # print(f'DEBUG: {DEBUG}')
@@ -908,7 +911,7 @@ class debugger(object):
                 except:
                     print("TRACEBACK =", traceback.format_exc())
         # print("DEBUG_SERVER [0]:", DEBUG_SERVER)
-        if DEBUG_SERVER:# or debug:
+        if (os.getenv('DEBUG_SERVER') and os.getenv('DEBUG_SERVER') in [1, '1', 'true', 'True']) or DEBUG_SERVER:# or debug:
             # self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
             if cls: formatlist = 'cls'
             
@@ -1016,8 +1019,8 @@ def debug(defname = None, debug = None, host = None, port = None, line_number = 
     
     line_number =  " [" + make_colors(str(inspect.stack()[1][2]), 'red', 'lightwhite') + "] "
     msg = ''
-
-    if DEBUG or debug or DEBUG_SERVER:
+        
+    if (os.getenv('DEBUG') and os.getenv('DEBUG') in [1, '1', 'true', 'True']) or debug or (os.getenv('DEBUG_SERVER') and os.getenv('DEBUG_SERVER') in [1, '1', 'true', 'True']) or DEBUG_SERVER:
         # print(f'os.getenv("DEBUG") [ZZ]: {os.getenv("DEBUG")}')
         # print(f'debug [ZZ]: {debug}')
         # print(f'DEBUG [ZZ]: {DEBUG}')
