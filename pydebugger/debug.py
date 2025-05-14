@@ -176,9 +176,9 @@ def debug_self(**kwargs):
     return debug(**kwargs)
 
 def get_max_width():
-    if sys.version_info.major == 3 or not sys.platform == 'win32':
+    try:
         MAX_WIDTH = shutil.get_terminal_size()[0]
-    else:
+    except:
         MAX_WIDTH = cmdw.getWidth()
     return MAX_WIDTH
 
@@ -288,10 +288,7 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
                 else:
                     print(msg)
                     
-                if sys.platform == 'win32':
-                    print("=" * (get_max_width() - 3))
-                else:
-                    print("=" * ((get_max_width() * 2) - 3))            
+                print("=" * get_max_width())
     
             #server_socket.close() #TCP
             
