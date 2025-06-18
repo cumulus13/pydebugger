@@ -11,6 +11,7 @@ if sys.version_info.major == 3:
     from rich import traceback as rich_traceback, console
     console = console.Console(width = shutil.get_terminal_size()[0])
     rich_traceback.install(theme = 'fruity', max_frames = 30, width = shutil.get_terminal_size()[0])
+    from rich.syntax import Syntax
 import inspect
 import random
 import socket
@@ -153,6 +154,26 @@ force = False
 
 # print(f'os.getenv("DEBUG") [XXX]: {os.getenv("DEBUG")}')
 # print(f'DEBUG [XXX]: {DEBUG}')
+
+def get_width():
+    width = 80
+    try:
+        width = shutil.get_terminal_size()[0]
+    except:
+        width = cmdw.getWidth()
+    return width
+
+def get_source(source):
+    if sys.version_info.major == 3:
+        console.print(Syntax(inspect.getsource(source), "python", theme = 'fruity', line_numbers=True, tab_size=2, code_width=get_width(), word_wrap = True))
+        # print("WIDTH:", get_width())
+    else:
+        try:
+            cmd = """python3 -c \"import {};import inspect;from rich.console import Console;from rich.syntax import Syntax;console = Console();console.print(Syntax(inspect.getsource({}), 'python', theme = 'fruity', line_numbers=True, tab_size=2, code_width={}))\"""".format(source.__module__, source.__module__, get_width())
+            os.system(cmd)
+        except:
+            cmd = """python3 -c \"import {};import inspect;from rich.console import Console;from rich.syntax import Syntax;console = Console();console.print(Syntax(inspect.getsource({}), 'python', theme = 'fruity', line_numbers=True, tab_size=2, code_width={}))\"""".format(source.__name__, source.__name__, get_width())
+            os.system(cmd)
 
 def debug_server_client(msg, host = '127.0.0.1', port = 50001):
     RECEIVER_HOST = CONFIG.get_config_as_list('RECEIVER', 'HOST') or host
@@ -731,7 +752,7 @@ class debugger(object):
                 return False
     
     @classmethod
-    def printlist(self, defname = None, debug = None, host = None, port = None, FILENAME = '', linenumbers = '', print_function_parameters = False, **kwargs):
+    def printlist(self, defname = None, debug = None, host = None, port = None, FILENAME = '', linenumbers = '', print_function_parameters = False, source = False, **kwargs):
         
         # print(f"KWARGS: {kwargs}")
         
@@ -891,6 +912,15 @@ class debugger(object):
             try:
                 if os.getenv("DEBUG") == '1' or debug or DEBUG == '1' or DEBUG == True or DEBUG == 1:
                     print(formatlist)
+                    if source:
+                        # call get_source
+                        frame_globals = inspect.stack()[2][0].f_globals
+                        if defname in frame_globals and inspect.isfunction(frame_globals[defname]):
+                            get_source(frame_globals[defname])
+                        # else:
+                            # print("Source not found for defname:", defname)
+                        
+                    
             except:
                 pass
         else:
@@ -905,8 +935,18 @@ class debugger(object):
                             print(formatlist.encode('utf-8'))
                         else:
                             print(formatlist)
+                        if source:
+                            # call get_source
+                            frame_globals = inspect.stack()[2][0].f_globals
+                            if defname in frame_globals and inspect.isfunction(frame_globals[defname]):
+                                get_source(frame_globals[defname])
+                            # else:
+                                # print("Source not found for defname:", defname)
+                            
+                        
                 except:
                     print("TRACEBACK =", traceback.format_exc())
+            
         # print("DEBUG_SERVER [0]:", DEBUG_SERVER)
         if (os.getenv('DEBUG_SERVER') and os.getenv('DEBUG_SERVER') in [1, '1', 'true', 'True']) or DEBUG_SERVER:# or debug:
             # self.debug_server_client(formatlist + " [%s] [%s]" % (make_colors(ATTR_NAME, 'white', 'on_blue'), PID))
@@ -975,7 +1015,7 @@ class debugger(object):
         except KeyboardInterrupt:
             sys.exit(0)
             
-def debug(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, **kwargs):
+def debug(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, source = False, **kwargs):
     # print(f'os.getenv("DEBUG") [YY]: {os.getenv("DEBUG")}')
     # print(f'debug [YY]: {debug}')
     # print(f'DEBUG [YY]: {DEBUG}')
@@ -1023,7 +1063,7 @@ def debug(defname = None, debug = None, host = None, port = None, line_number = 
         # print(f'DEBUG [ZZ]: {DEBUG}')
         
         c = debugger(defname, debug)
-        msg = c.printlist(defname, debug, host, port, linenumbers = line_number, print_function_parameters= print_function_parameters, **kwargs)
+        msg = c.printlist(defname, debug, host, port, linenumbers = line_number, print_function_parameters= print_function_parameters, source = source, **kwargs)
     
     if CONFIG.get_config('database', 'active') == 1 or CONFIG.get_config('database', 'active') == True:
         if not msg:
@@ -1036,7 +1076,7 @@ def debug(defname = None, debug = None, host = None, port = None, line_number = 
 def debug1(*args, **kwargs):
     return debug(*args, **kwargs)
 
-def debug2(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, **kwargs):
+def debug2(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, source = False, **kwargs):
     global DEBUGGER_SERVER2
     # print(f"DEBUGGER_SERVER: {DEBUGGER_SERVER}")
     sig = inspect.signature(debug1)
@@ -1110,7 +1150,7 @@ def debug2(defname = None, debug = None, host = None, port = None, line_number =
         # return debug1(defname, debug, host, port, line_number, tag, print_function_parameters, **kwargs)
     return 
 
-def debug3(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, **kwargs):
+def debug3(defname = None, debug = None, host = None, port = None, line_number = None, tag = 'debug', print_function_parameters = False, source = False, **kwargs):
     global DEBUGGER_SERVER3
     
     sig = inspect.signature(debug1)
