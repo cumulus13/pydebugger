@@ -1,17 +1,16 @@
 #-*- encoding: utf-8 -*-
 #encoding: utf-8
-from __future__ import print_function
+# from __future__ import print_function
 
 import os
 import time
 import sys
+import argparse
 import shutil
-#rich traceback import
-if sys.version_info.major == 3:
-    from rich import traceback as rich_traceback, console
-    console = console.Console(width = shutil.get_terminal_size()[0])
-    rich_traceback.install(theme = 'fruity', max_frames = 30, width = shutil.get_terminal_size()[0])
-    from rich.syntax import Syntax
+from rich import traceback as rich_traceback, console
+console = console.Console(width = shutil.get_terminal_size()[0])
+rich_traceback.install(theme = 'fruity', max_frames = 30, width = shutil.get_terminal_size()[0])
+from rich.syntax import Syntax
 import inspect
 import random
 import socket
@@ -19,28 +18,20 @@ import cmdw
 import datetime
 from make_colors import make_colors
 import importlib
-# try:
-#     import configparser
-#     ConfigParser = configparser
-# except ImportError:
-#     import ConfigParser
-#     configparser = ConfigParser
 import re
 import traceback
 import ctypes
-if not sys.platform == 'win32': import ctypes
-#urllib.parse import
-if sys.version_info.major == 3:
-    from urllib.parse import quote_plus
-else:
-    from urllib import quote_plus
+from urllib.parse import quote_plus
 import socket
 from collections import OrderedDict
-# import ast, json
 import signal
 configset = importlib.import_module('configset')
 from pathlib import Path
-
+try:
+    from .custom_rich_help_formatter import CustomRichHelpFormatter
+except:
+    from custom_rich_help_formatter import CustomRichHelpFormatter
+    
 CONFIGNAME = str(Path(__file__).cwd() / 'debug.ini') if (Path(__file__).cwd() / 'debug.ini').is_file() else str(Path(__file__).parent / 'debug.ini')
 CONFIG = configset.configset(CONFIGNAME)
 USE_SQL = False
@@ -71,13 +62,13 @@ if os.getenv('DEBUG') and os.getenv('DEBUG') in ['1', 'true', 'True', 1]:
 elif DEBUG in ['1', 'true', 'True', 1]:
     DEBUG = True
     os.environ.update({'DEBUG':'1'})
-##########################################################################################################################################
+########################################################################################################################################
 DEBUG_SERVER = False
 if DEBUG_SERVER in ['1', 'true', 'True', 1]: DEBUG_SERVER = True
 
 if os.getenv('DEBUG_SERVER') and os.getenv('DEBUG_SERVER') in ['1', 'true', 'True', 1]: DEBUG_SERVER = True
 
-##########################################################################################################################################
+########################################################################################################################################
 DEBUG_PORT = 50001
 DEBUG_PORT = os.getenv('DEBUG_PORT') or DEBUG_PORT
 
@@ -90,7 +81,7 @@ DEBUG_PORT3 = os.getenv('DEBUG_PORT3') or DEBUG_PORT3
 DEBUG_PORT4 = 50004
 DEBUG_PORT4 = os.getenv('DEBUG_PORT3') or DEBUG_PORT4
 
-##########################################################################################################################################
+########################################################################################################################################
 DEBUG_HOST = '127.0.0.1'
 DEBUG_HOST = os.getenv('DEBUG_HOST') or DEBUG_HOST
 
@@ -103,13 +94,10 @@ DEBUG_HOST3 = os.getenv('DEBUG_HOST3') or DEBUG_HOST3
 DEBUG_HOST4 = ''
 DEBUG_HOST4 = os.getenv('DEBUG_HOST4') or DEBUG_HOST4
 
-##########################################################################################################################################
+########################################################################################################################################
 DEBUGGER_SERVER = [f'{DEBUG_HOST or "127.0.0.1"}:{DEBUG_PORT or 50001}']
 DEBUGGER_SERVER2 = []
 DEBUGGER_SERVER3 = []
-
-# print(f'os.getenv("DEBUG") [XX]: {os.getenv("DEBUG")}')
-# print(f'DEBUG [XX]: {DEBUG}')
 
 if os.getenv('DEBUGGER_SERVER'):
     env_val = os.getenv('DEBUGGER_SERVER').strip()
@@ -137,9 +125,6 @@ if os.getenv('DEBUGGER_SERVER'):
     else:
         DEBUGGER_SERVER = [env_val]
 
-# FILENAME = os.getenv('DEBUG_FILENAME')
-
-#import __version_
 try:
     from . import __version__
     VERSION = __version__
@@ -151,9 +136,6 @@ except:
         VERSION = 'UNKNOWN'
 
 force = False
-
-# print(f'os.getenv("DEBUG") [XXX]: {os.getenv("DEBUG")}')
-# print(f'DEBUG [XXX]: {DEBUG}')
 
 def get_width():
     width = 80
@@ -443,16 +425,16 @@ def set_detach(width = 700, height = 400, x = 10, y = 50, center = False, buffer
     setting.setSize(width, height, screensize[0] - width, y, center)
     if on_top: setting.setAlwaysOnTop(width, height, screensize[0] - width, y, center)
     
-def version():
-    try:
-        try:
-            from . import __version__
-        except:
-            import __version__
-        return __version__.version
-    except:
-        #print(traceback.format_exc())
-        return "ERROR"
+# def version():
+#     try:
+#         try:
+#             from . import __version__
+#         except:
+#             import __version__
+#         return __version__.version
+#     except:
+#         #print(traceback.format_exc())
+#         return "UNKNOWN"
 
 def showme():
     if not sys.platform == 'win32':
@@ -1275,65 +1257,268 @@ def make_debug_func(idx):
         return
     return debug_func
 
-# Daftarkan fungsi debug4 sampai debug10 secara otomatis
+def version():
+    """
+    Get the version of the ddf module.
+    Version is taken from the __version__.py file if it exists.
+    The content of __version__.py should be:
+    version = "0.33"
+    """
+    try:
+        version_file = Path(__file__).parent / "__version__.py"
+        if version_file.is_file():
+            with open(version_file, "r") as f:
+                for line in f:
+                    if line.strip().startswith("version"):
+                        parts = line.split("=")
+                        if len(parts) == 2:
+                            return parts[1].strip().strip('"').strip("'")
+    except Exception as e:
+        debug(error=str(e))
+
+    return "UNKNOWN VERSION"
+    
+# Register the debug4 function to debug10 automatically
 for i in range(4, 11):
     globals()[f'debug{i}'] = make_debug_func(i)
 
+def handle_windows():
+    global HANDLE
+    if sys.platform == 'win32':
+        HANDLE = ctypes.windll.user32.GetForegroundWindow()
+
+# if not __name__ == '__main__':
+#         global HANDLE
+#         # import win32gui, win32con
+#         if sys.platform == 'win32':
+#             #kernel32 = ctypes.WinDLL('kernel32')
+#             # handle = kernel32.GetStdHandle(-11)
+#             # handle1 = win32gui.GetForegroundWindow()
+#             handle2 = ctypes.windll.user32.GetForegroundWindow()
+#             HANDLE = handle2
+            
+    # if len(sys.argv) > 1 and sys.argv[1].isdigit():
+    #     serve(port = int(*sys.argv[1:]))
+        
 def usage():
-    if not __name__ == '__main__':
-        global HANDLE
-        # import win32gui, win32con
-        if sys.platform == 'win32':
-            #kernel32 = ctypes.WinDLL('kernel32')
-            # handle = kernel32.GetStdHandle(-11)
-            # handle1 = win32gui.GetForegroundWindow()
-            handle2 = ctypes.windll.user32.GetForegroundWindow()
-            HANDLE = handle2
-    # print("HANDLE 3:", handle)
-    # print("HANDLE 4:", handle1)
-    # print("HANDLE 5:", handle2)
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        serve(port = int(*sys.argv[1:]))
-    else:
-        import argparse
-        parser = argparse.ArgumentParser(description= 'run debugger as server receive debug text default port is 50001', formatter_class= argparse.RawTextHelpFormatter)
-        parser.add_argument('-b', '--host', action = 'store', help = 'Bind / listen ip address, default all network device: 0.0.0.0', default = '0.0.0.0', type = str)
-        parser.add_argument('-p', '--port', action = 'store', help = 'Bind / listen port number, default is 50001', default = 50001, type = int)
-        parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
-        parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
-        parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
-        parser.add_argument('-l', '--db-log', action = 'store_true', help = 'Get the print log from Database')
-        parser.add_argument('-L', '--db-log-tag', action = 'store', help = 'Get the print log from Database with Tag')
-        parser.add_argument('-v', '--version', action = 'store_true', help = 'Get version number')
-        if len(sys.argv) == 1:
-            print("\n")
-            parser.print_help()
-            try:
-                args = parser.parse_args()
-                serve(args.host, args.port, args.on_top, args.center)
-            except KeyboardInterrupt:
-                sys.exit()
-        else:
-            args = parser.parse_args()
-            if args.cleanup:
-                cleanup(args.cleanup)
-            elif args.db_log:
-                debugger.db_log()
-            elif args.db_log_tag:
-                debugger.db_log(args.db_log_tag)
-            elif args.version:
-                print("VERSION:", version())
+    parser = argparse.ArgumentParser(
+        prog='debug', 
+        description= '🐍 Run debugger as server, receive debug message with default port is 50001', 
+        formatter_class= CustomRichHelpFormatter
+    )
+    
+    # === Global Command ===
+    parser.add_argument('-a', '--on-top', action = 'store_true', help = 'Always On Top')
+    parser.add_argument('-C', '--center', action = 'store_true', help = 'Centering window')
+    parser.add_argument('-c', '--cleanup', action = 'store', help = 'CleanUp File')
+    parser.add_argument('-v', '--version', action = 'store_true', help = 'Get version number')
+    
+    # === Subcommand: serve ===        
+    subparsers = parser.add_subparsers(dest = 'COMMAND', help = 'Available subCommands')
+    serve_parser = subparsers.add_parser('serve', help='Run debug message UDP server', formatter_class= CustomRichHelpFormatter)
+    serve_parser.add_argument('--host', default='0.0.0.0', help='Host to bind, default: 0.0.0.0')
+    serve_parser.add_argument('--port', type=int, default=50001, help='Port to bind, default: 50001')
+    serve_parser.add_argument('--on-top', action='store_true', help='Always On Top')
+    serve_parser.add_argument('--center', action='store_true', help='Center the window')
+
+    # === Subcommand: log ===
+    log_parser = subparsers.add_parser('log', help='Database log inspection', formatter_class= CustomRichHelpFormatter)
+    log_parser.add_argument('-l', '--db-log', action = 'store_true', help = 'Get Database log')
+    log_parser.add_argument('-L', '--db-log-tag', action = 'store', help = 'Filter Database log by tag')
+    
+    # === Subcommand: cleanup ===
+    cleanup_parser = subparsers.add_parser('cleanup', help='Cleanup file', formatter_class= CustomRichHelpFormatter)
+    cleanup_parser.add_argument('path', help='Path file to clean')
+
+    # === Subcommand: version ===
+    version_parser = subparsers.add_parser('version', help='Print version info')
+    
+    # === Subcommand: cleaner ===
+    cleaner_parser = subparsers.add_parser('cleaner', help='Print version info', formatter_class= CustomRichHelpFormatter)
+    cleaner_parser.add_argument(
+        'path',
+        help='📁 Path to directory or Python file for processing'
+    )
+    
+    cleaner_parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='👁️ Preview changes without modifying files'
+    )
+    
+    action_group = cleaner_parser.add_mutually_exclusive_group()
+    action_group.add_argument(
+        '-co', '--comment-out',
+        action='store_true',
+        help='💬 Comment out debug lines (add # in front)'
+    )
+    
+    action_group.add_argument(
+        '-ci', '--comment-in',
+        action='store_true',
+        help='🔓 Uncomment debug lines (remove # in front)'
+    )
+    
+    return parser
+
+def main():        
+    handle_windows()
+    
+    from cleaner import DebugCleaner
+    
+    if len(sys.argv) == 3:
+        if len(sys.argv[1].split(".")) == 4 and not str(sys.argv[1]).isdigit():
+            if str(sys.argv[2]).isdigit():
+                serve(sys.argv[1], int(sys.argv[2]))
             else:
-                try:
-                    serve(args.host, args.port, args.on_top, args.center)
-                except KeyboardInterrupt:
-                    sys.exit()
+                serve(sys.argv[1], 50001)
+        elif len(sys.argv[2].split(".")) == 4 and not str(sys.argv[2]).isdigit():
+            if str(sys.argv[1]).isdigit():
+                serve(sys.argv[2], int(sys.argv[1]))
+            else:
+                serve(sys.argv[2], 50001)
+    elif len(sys.argv) == 2:
+        # print(f"str(sys.argv[1]).isdigit(): {str(sys.argv[1]).isdigit()}")
+        if str(sys.argv[1]).isdigit():
+            serve(port = int(sys.argv[1] or 50001))
+        elif len(sys.argv[1].split(".")) == 4 and not str(sys.argv[1]).isdigit():
+            serve(sys.argv[1], 50001)
+    # serve(port = int(*sys.argv[1:]))
+    
+    parser = usage()
+    
+    if len(sys.argv) <= 1:
+        print("\n")
+        parser.print_help()
+        print("\n💡 Use 'debug.py <command> --help' for more details.")
+        try:
+            serve()
+        except KeyboardInterrupt:
+            return
+        except Exception as e:
+            console.print(f"\n ❌ [white on red blink]ERROR:[/] [black on #FFFF00]\[run server][/]: [white on blue]{e}[/]")
+            sys.exit(0)
+
+    
+    args = parser.parse_args()
+
+    if args.command == 'cleaner':
+        manager = DebugCleaner()
+        python_files = manager.find_python_files(args.path)
+
+        if not python_files:
+            print("\u26a0\ufe0f No Python files found.")
+            return
+
+        action = 'clean'
+        if getattr(args, 'comment_out', False):
+            action = 'comment_out'
+        elif getattr(args, 'comment_in', False):
+            action = 'comment_in'
+
+        results = []
+        for file_path in python_files:
+            result = manager.process_file(file_path, action, args.dry_run)
+            results.append(result)
+
+        manager.display_results(results, args.dry_run, action)
+
+    elif args.command == 'serve':
+        serve(args.host, args.port, args.on_top, args.center)
+
+    elif args.command == 'log':
+        if args.db_log:
+            debugger.db_log()
+        elif args.db_log_tag:
+            debugger.db_log(args.db_log_tag)
+
+    elif args.command == 'cleanup':
+        cleanup(args.path)
+
+    elif args.command == 'version':
+        print("VERSION:", version())
+
+
+    # if args.cleanup:
+    #     cleanup(args.cleanup)
+    # elif args.db_log:
+    #     debugger.db_log()
+    # elif args.db_log_tag:
+    #     debugger.db_log(args.db_log_tag)
+    # elif args.version:
+    #     print("VERSION:", version())
+    # else:
+    #     try:
+    #         serve(args.host, args.port, args.on_top, args.center)
+    #     except KeyboardInterrupt:
+    #         sys.exit()
+
+# from cleaner import DebugCleaner
+
+# def main():
+#     parser = argparse.ArgumentParser(
+#         description="Debug Framework CLI",
+#         formatter_class=CustomRichHelpFormatter
+#     )
+
+#     subparsers = parser.add_subparsers(dest='command', help='Available subcommands')
+
+#     # === Subparser untuk "cleaner" ===
+#     cleaner_parser = subparsers.add_parser(
+#         "cleaner",
+#         help="Manage debug statements in Python files",
+#         formatter_class=CustomRichHelpFormatter
+#     )
+
+#     # Ambil parser dari DebugCleaner dan merge argument-nya ke subparser cleaner
+#     cleaner_args = DebugCleaner().usage()
+#     for action in cleaner_args._actions:
+#         if action.option_strings:
+#             cleaner_parser._add_action(action)
+#         elif action.dest != 'help':  # skip duplicate help
+#             cleaner_parser._add_action(action)
+
+#     # === Subparser lain bisa ditambahkan di sini, contoh:
+#     # log_parser = subparsers.add_parser("log", help="View debug logs")
+
+#     # Show help if no args
+#     if len(sys.argv) <= 1:
+#         parser.print_help()
+#         sys.exit(0)
+
+#     args = parser.parse_args()
+
+#     if args.command == "cleaner":
+#         # Jalankan fungsi utama dari cleaner
+#         manager = DebugCleaner()
+#         python_files = manager.find_python_files(args.path)
+
+#         if not python_files:
+#             print("⚠️ No Python files found.")
+#             return
+
+#         if args.comment_out:
+#             action = 'comment_out'
+#         elif args.comment_in:
+#             action = 'comment_in'
+#         else:
+#             action = 'clean'
+
+#         results = []
+#         for file_path in python_files:
+#             result = manager.process_file(file_path, action, args.dry_run)
+#             results.append(result)
+
+#         manager.display_results(results, args.dry_run, action)
 
 if __name__ == '__main__':
     if sys.platform == 'win32':
         kernel32 = ctypes.WinDLL('kernel32')
         handle2 = ctypes.windll.user32.GetForegroundWindow()
         HANDLE = handle2
-        print("HANDLE:", HANDLE)
-    print("PID:", PID)
-    usage()
+        console.print(f"HANDLE: [#FFFF00]{HANDLE}[/]| PID: [#00FFFF]{PID}[/]")
+    else:
+        print(f"PID: {PID}")
+    # print("PID:", PID)
+    # usage()
+    main()
