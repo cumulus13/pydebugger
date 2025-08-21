@@ -1,6 +1,6 @@
+#!/usr/bin/env python
 #-*- encoding: utf-8 -*-
 #encoding: utf-8
-# from __future__ import print_function
 
 import os
 import time
@@ -32,11 +32,15 @@ try:
 except:
     from custom_rich_help_formatter import CustomRichHelpFormatter
     
-CONFIGNAME = str(Path(__file__).cwd() / 'debug.ini') if (Path(__file__).cwd() / 'debug.ini').is_file() else str(Path(__file__).parent / 'debug.ini')
+try:
+    from .config import CONFIG
+except Exception as e:
+    from config import CONFIG
+    
+CONFIGNAME = str(Path.cwd() / (Path(__file__).stem + ".ini")) if (Path.cwd() / (Path(__file__).stem + ".ini")).is_file() else str(Path(__file__).parent / (Path(__file__).stem + ".ini"))
 CONFIG = configset.configset(CONFIGNAME)
 USE_SQL = False
 
-#sqlalchemy import
 try:
     from sqlalchemy import create_engine, Column, Integer, Text, text, func, TIMESTAMP #, String, Boolean, TIMESTAMP, BigInteger, Text
     from sqlalchemy.ext.declarative import declarative_base
@@ -298,6 +302,10 @@ def serve(host = '0.0.0.0', port = 50001, on_top=False, center = False):
     except KeyboardInterrupt:
         print(make_colors("server shutdown ...", 'lw', 'lr'))
         os.kill(os.getpid(), signal.SIGTERM)
+    finally:
+        server_socket.close()
+        console.print("[green]Socket closed, server terminated gracefully.[/]")
+        sys.exit(0)
         
 def serve1(host = '0.0.0.0', port = 50001, on_top=False, center = False):
     on_top = CONFIG.get_config('display', 'on_top') or on_top
@@ -1286,19 +1294,6 @@ def handle_windows():
     global HANDLE
     if sys.platform == 'win32':
         HANDLE = ctypes.windll.user32.GetForegroundWindow()
-
-# if not __name__ == '__main__':
-#         global HANDLE
-#         # import win32gui, win32con
-#         if sys.platform == 'win32':
-#             #kernel32 = ctypes.WinDLL('kernel32')
-#             # handle = kernel32.GetStdHandle(-11)
-#             # handle1 = win32gui.GetForegroundWindow()
-#             handle2 = ctypes.windll.user32.GetForegroundWindow()
-#             HANDLE = handle2
-            
-    # if len(sys.argv) > 1 and sys.argv[1].isdigit():
-    #     serve(port = int(*sys.argv[1:]))
         
 def usage():
     parser = argparse.ArgumentParser(
